@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>基金补仓对比精算器</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; padding: 20px; background: #f0f2f5; display: flex; justify-content: center; }
+        .card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 450px; }
+        h2 { text-align: center; color: #1a1a1a; margin-top: 0; font-size: 22px; border-bottom: 2px solid #007aff; padding-bottom: 10px; }
+        .group { margin-bottom: 12px; }
+        label { display: block; margin-bottom: 5px; font-size: 13px; color: #666; font-weight: bold; }
+        input { width: 100%; padding: 12px; border: 1px solid #dcdfe6; border-radius: 8px; font-size: 16px; box-sizing: border-box; outline: none; transition: 0.3s; background: #fafafa; }
+        input:focus { border-color: #007aff; background: #fff; }
+        button { width: 100%; padding: 15px; background: #007aff; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 15px; box-shadow: 0 4px 10px rgba(0,122,255,0.3); }
+        button:active { transform: scale(0.98); }
+        
+        #result { margin-top: 25px; display: none; }
+        .res-section { background: #f8faff; border: 1px solid #e1e8f0; border-radius: 10px; padding: 15px; margin-bottom: 15px; }
+        .section-title { font-size: 14px; font-weight: bold; color: #444; margin-bottom: 10px; border-left: 4px solid #007aff; padding-left: 8px; }
+        .res-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
+        .res-row:last-child { margin-bottom: 0; }
+        .lab { color: #888; }
+        .val { font-weight: 600; font-family: 'Consolas', monospace; color: #333; }
+        .highlight { color: #cf1322; font-size: 16px; }
+        .blue { color: #007aff; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>📈 补仓回本对比计算</h2>
+    
+    <div class="group">
+        <label>1. 原持仓成本点位 (均价)</label>
+        <input type="text" id="cost" placeholder="如 1.5430" oninput="fixInput(this)">
+    </div>
+
+    <div class="group">
+        <label>2. 当前亏损金额 (元)</label>
+        <input type="text" id="loss" placeholder="如 2000" oninput="fixInput(this)">
+    </div>
+    
+    <div class="group">
+        <label>3. 计划加仓金额 (元)</label>
+        <input type="text" id="addMoney" placeholder="如 5000" oninput="fixInput(this)">
+    </div>
+
+    <div class="group">
+        <label>4. 现在的点位 (当前价格)</label>
+        <input type="text" id="nowPrice" placeholder="如 1.1250" oninput="fixInput(this)">
+    </div>
+
+    <button onclick="calc()">立即对比计算</button>
+
+    <div id="result">
+        <!-- 补仓前 -->
+        <div class="res-section" style="background: #fff5f5; border-color: #ffccc7;">
+            <div class="section-title" style="border-left-color: #ff4d4f;">补仓前状态</div>
+            <div class="res-row"><span class="lab">当前持仓市值:</span> <span id="pre_market" class="val"></span></div>
+            <div class="res-row"><span class="lab">距回本需上涨:</span> <span id="pre_percent" class="val highlight"></span></div>
+            <div class="res-row"><span class="lab">当前持仓份额:</span> <span id="pre_shares" class="val"></span></div>
+        </div>
+
+        <!-- 补仓后 -->
+        <div class="res-section" style="background: #f6ffed; border-color: #b7eb8f;">
+            <div class="section-title" style="border-left-color: #52c41a;">补仓后状态</div>
+            <div class="res-row"><span class="lab">补仓后总市值:</span> <span id="post_market" class="val blue"></span></div>
+            <div class="res-row"><span class="lab">新摊薄成本价:</span> <span id="post_cost" class="val blue"></span></div>
+            <div class="res-row"><span class="lab">距回本需上涨:</span> <span id="post_percent" class="val highlight"></span></div>
+            <div class="res-row"><span class="lab">预计回本点位:</span> <span id="post_target" class="val highlight"></span></div>
+        </div>
+    </div>
+</div>
+
+<script>
+function fixInput(obj) {
+    obj.value = obj.value.replace(/[^\d.]/g, ""); 
+    const t = obj.value.split('.');
+    if (t.length > 2) obj.value = t[0] + "." + t.slice(1).join("");
+}
+
+function calc() {
+    const cost = parseFloat(document.getElementById('cost').value);
+    const loss = parseFloat(document.getElementById('loss').value);
+    const addMoney = parseFloat(document.getElementById('addMoney').value);
+    const nowPrice = parseFloat(document.getElementById('nowPrice').value);
+
+    if ([cost, loss, addMoney, nowPrice].some(isNaN)) {
+        alert("请输入完整的数值（支持小数）");
+        return;
+    }
+
+    // 1. 反推原持仓份额
+    // 亏损 = (成本 - 当前价) * 份额 -> 份额 = 亏损 / (成本 - 当前价)
+    const oldShares = loss / (cost - nowPrice);
+    
+    // 2. 补仓前市值 = 份额 * 当前价
+    const preMarketVal = oldShares * nowPrice;
+    
+    // 3. 补仓前需涨幅 = (成本 / 当前价 - 1) * 100
+    const preNeedUp = ((cost / nowPrice) - 1) * 100;
+
+    // 4. 补仓计算
+    const addShares = addMoney / nowPrice;
+    const totalShares = oldShares + addShares;
+    const oldPrincipal = oldShares * cost; // 原本金
+    const totalPrincipal = oldPrincipal + addMoney; // 总投入
+    
+    const postMarketVal = totalShares * nowPrice;
+    const newCost = totalPrincipal / totalShares;
+    const postNeedUp = ((newCost / nowPrice) - 1) * 100;
+
+    // 渲染结果
+    // 补仓前
+    document.getElementById('pre_market').innerText = "￥" + preMarketVal.toFixed(2);
+    document.getElementById('pre_percent').innerText = preNeedUp.toFixed(2) + "%";
+    document.getElementById('pre_shares').innerText = oldShares.toFixed(2) + " 份";
+
+    // 补仓后
+    document.getElementById('post_market').innerText = "￥" + postMarketVal.toFixed(2);
+    document.getElementById('post_cost').innerText = newCost.toFixed(4);
+    document.getElementById('post_percent').innerText = postNeedUp.toFixed(2) + "%";
+    document.getElementById('post_target').innerText = newCost.toFixed(4);
+
+    document.getElementById('result').style.display = 'block';
+}
+</script>
+
+</body>
+</html>
