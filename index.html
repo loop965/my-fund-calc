@@ -3,131 +3,151 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>基金助手</title>
+    <title>基金精算助手 - Pro</title>
     <style>
-        :root { --primary: #007aff; --success: #52c41a; --danger: #ff4d4f; --bg: #f4f7f9; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; padding: 15px; }
-        .container { width: 100%; max-width: 450px; background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); overflow: hidden; }
-        
-        /* 导航栏样式 */
-        .tabs { display: flex; background: #eee; padding: 5px; margin: 15px; border-radius: 12px; }
-        .tab { flex: 1; text-align: center; padding: 10px; font-size: 15px; font-weight: bold; color: #666; cursor: pointer; border-radius: 8px; transition: 0.3s; }
-        .tab.active { background: white; color: var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        
-        /* 内容区域 */
-        .content { padding: 0 20px 25px; display: none; }
+        :root {
+            --primary: #007aff; --success: #34c759; --danger: #ff3b30; --warning: #ff9500;
+            --bg: #f4f7f9; --card: #ffffff; --text: #1c1c1e; --sub-text: #8e8e93;
+            --border: #e5e5ea; --input-bg: #fafafa; --tab-bg: #eeeeee;
+        }
+        [data-theme="dark"] {
+            --bg: #000000; --card: #1c1c1e; --text: #ffffff; --sub-text: #8e8e93;
+            --border: #38383a; --input-bg: #2c2c2e; --tab-bg: #2c2c2e;
+        }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; padding: 10px; color: var(--text); transition: 0.3s; }
+        .container { width: 100%; max-width: 480px; background: var(--card); border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden; margin-top: 10px; position: relative; }
+        .theme-toggle { position: absolute; right: 15px; top: 18px; font-size: 20px; cursor: pointer; z-index: 10; }
+        .tabs { display: flex; background: var(--tab-bg); padding: 5px; margin: 15px 15px 10px; border-radius: 12px; }
+        .tab { flex: 1; text-align: center; padding: 12px; font-size: 15px; font-weight: bold; color: var(--sub-text); cursor: pointer; border-radius: 8px; }
+        .tab.active { background: var(--card); color: var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .content { padding: 0 15px 20px; display: none; }
         .content.active { display: block; }
+        .group { margin-bottom: 12px; }
+        label { display: block; margin-bottom: 5px; font-size: 13px; color: var(--sub-text); font-weight: 600; }
         
-        /* 输入框样式 */
-        .group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 6px; font-size: 13px; color: #888; font-weight: 600; }
-        input { width: 100%; padding: 14px; border: 1px solid #e0e0e0; border-radius: 10px; font-size: 16px; box-sizing: border-box; outline: none; background: #fafafa; }
-        input:focus { border-color: var(--primary); background: #fff; }
+        /* 核心修复点：inputmode="decimal" 确保弹出带小数点的数字键盘 */
+        input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 16px; box-sizing: border-box; outline: none; background: var(--input-bg); color: var(--text); -webkit-appearance: none; }
+        input:focus { border-color: var(--primary); }
         
-        /* 按钮 */
-        button { width: 100%; padding: 16px; color: white; border: none; border-radius: 12px; font-size: 17px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.2s; }
+        button { width: 100%; padding: 15px; color: white; border: none; border-radius: 12px; font-size: 17px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.2s; -webkit-tap-highlight-color: transparent; }
+        button:active { opacity: 0.8; transform: scale(0.98); }
         .btn-calc { background: var(--primary); }
-        .btn-calc:active { background: #005bb7; }
         .btn-profit { background: var(--success); }
-        .btn-profit:active { background: #389e0d; }
-
-        /* 结果展示区 */
-        .res-box { margin-top: 20px; padding: 15px; border-radius: 12px; display: none; }
-        .res-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; border-bottom: 1px dashed #eee; padding-bottom: 8px; }
-        .res-row:last-child { border: none; }
+        .res-box { margin-top: 15px; padding: 15px; border-radius: 12px; display: none; border: 1px solid var(--border); background: var(--input-bg); }
+        .section-title { font-size: 12px; font-weight: bold; color: var(--sub-text); margin-bottom: 8px; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+        .res-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
         .val { font-weight: bold; font-family: 'Monaco', monospace; }
-        .high-red { color: var(--danger); font-size: 16px; }
-        .high-blue { color: var(--primary); font-size: 16px; }
+        .high-red { color: var(--danger); }
+        .high-blue { color: var(--primary); }
         .high-green { color: var(--success); font-size: 18px; }
+        .tip { font-size: 11px; color: var(--sub-text); margin-top: 5px; line-height: 1.4; }
     </style>
 </head>
-<body>
+<body data-theme="light">
 
 <div class="container">
-    <!-- 顶部切换 -->
+    <div class="theme-toggle" onclick="toggleTheme()">🌓</div>
     <div class="tabs">
-        <div class="tab active" onclick="switchTab(0)">📉 补仓回本</div>
+        <div class="tab active" onclick="switchTab(0)">📉 补仓精算</div>
         <div class="tab" onclick="switchTab(1)">💰 盈利预演</div>
     </div>
 
     <!-- 模块1：补仓计算 -->
     <div id="tab0" class="content active">
-        <div class="group"><label>持仓成本点位</label><input type="text" id="c1_cost" placeholder="如: 1.5430" oninput="fix(this)"></div>
-        <div class="group"><label>当前亏损金额 (元)</label><input type="text" id="c1_loss" placeholder="如: 2000" oninput="fix(this)"></div>
-        <div class="group"><label>计划加仓金额 (元)</label><input type="text" id="c1_add" placeholder="如: 5000" oninput="fix(this)"></div>
-        <div class="group"><label>现在点位 (加仓价)</label><input type="text" id="c1_now" placeholder="如: 1.1250" oninput="fix(this)"></div>
-        <button class="btn-calc" onclick="calcCover()">计算补仓结果</button>
+        <div class="group"><label>1. 原持仓成本点位</label><input type="text" inputmode="decimal" id="c1_cost" placeholder="如: 1.5430" oninput="fix(this)"></div>
+        <div class="group"><label>2. 当前亏损金额 (元)</label><input type="text" inputmode="decimal" id="c1_loss" placeholder="如: 2000" oninput="fix(this)"></div>
+        <div class="group"><label>3. 现在的点位 (实时价格)</label><input type="text" inputmode="decimal" id="c1_now" placeholder="基准价格" oninput="fix(this)"></div>
         
-        <div id="res0" class="res-box" style="background: #f0f7ff; border: 1px solid #bae7ff;">
-            <div class="res-row"><span>补前市值:</span><span id="r0_pre_m" class="val"></span></div>
-            <div class="res-row"><span>补后总市值:</span><span id="r0_post_m" class="val high-blue"></span></div>
-            <div class="res-row"><span>摊薄后新成本:</span><span id="r0_new_c" class="val high-blue"></span></div>
-            <div class="res-row"><span>距回本需涨:</span><span id="r0_up" class="val high-red"></span></div>
+        <div style="background: rgba(255,149,0,0.1); padding:12px; border-radius:12px; border:1px solid var(--warning); margin-top:15px;">
+            <div class="group"><label style="color:var(--warning)">4. 计划加仓金额 (元)</label><input type="text" inputmode="decimal" id="c1_add_money" placeholder="投入金额" oninput="fix(this)"></div>
+            <div class="group" style="margin-bottom:0"><label style="color:var(--warning)">5. 计划加仓点位 (买入价格)</label><input type="text" inputmode="decimal" id="c1_add_price" placeholder="补仓触发价" oninput="fix(this)"></div>
+        </div>
+
+        <button class="btn-calc" onclick="calcCover()">立即计算</button>
+        
+        <div id="res0" class="res-box">
+            <div class="res-section">
+                <div class="section-title">当前状态</div>
+                <div class="res-row"><span>原持仓市值:</span><span id="r0_pre_m" class="val"></span></div>
+                <div class="res-row"><span>原回本需涨:</span><span id="r0_pre_up" class="val high-red"></span></div>
+            </div>
+            <div class="res-section" style="border-top: 1px solid var(--border); padding-top: 10px;">
+                <div class="section-title" style="color:var(--primary)">补仓后预估</div>
+                <div class="res-row"><span>补仓位较现价:</span><span id="r0_drop" class="val" style="color:var(--warning)"></span></div>
+                <div class="res-row"><span>补后总市值:</span><span id="r0_post_m" class="val high-blue"></span></div>
+                <div class="res-row"><span>回本目标点位:</span><span id="r0_new_c" class="val high-blue"></span></div>
+                <div class="res-row"><span>需再涨回本:</span><span id="r0_post_up" class="val high-red" style="font-size:16px"></span></div>
+            </div>
         </div>
     </div>
 
     <!-- 模块2：盈利预演 -->
     <div id="tab1" class="content">
-        <div class="group"><label>当前持仓成本价</label><input type="text" id="c2_cost" placeholder="如: 1.5430" oninput="fix(this)"></div>
-        <div class="group"><label>当前亏损金额 (元)</label><input type="text" id="c2_loss" placeholder="如: 2000" oninput="fix(this)"></div>
-        <div class="group"><label>现在点位 (实时价)</label><input type="text" id="c2_now" placeholder="如: 1.2150" oninput="fix(this)"></div>
-        <div class="group"><label>预演目标点位 (涨到多少?)</label><input type="text" id="c2_target" placeholder="如: 1.8000" oninput="fix(this)"></div>
-        <button class="btn-profit" onclick="calcProfit()">计算预演盈利</button>
-
-        <div id="res1" class="res-box" style="background: #f6ffed; border: 1px solid #d9f7be;">
-            <div class="res-row" style="border-bottom: 2px solid #d9f7be;"><span>预计净利润:</span><span id="r1_profit" class="val high-green"></span></div>
-            <div class="res-row"><span>目标盈利率:</span><span id="r1_rate" class="val" style="color:#fa8c16"></span></div>
+        <div class="group"><label>1. 持仓成本点位</label><input type="text" inputmode="decimal" id="c2_cost" placeholder="如: 1.5430" oninput="fix(this)"></div>
+        <div class="group"><label>2. 当前亏损金额 (元)</label><input type="text" inputmode="decimal" id="c2_loss" placeholder="如: 2000" oninput="fix(this)"></div>
+        <div class="group"><label>3. 现在的点位 (实时价格)</label><input type="text" inputmode="decimal" id="c2_now" placeholder="现价" oninput="fix(this)"></div>
+        <div class="group"><label>4. 预演目标点位</label><input type="text" inputmode="decimal" id="c2_target" placeholder="目标止盈价" oninput="fix(this)"></div>
+        <button class="btn-profit" onclick="calcProfit()">计算盈利预演</button>
+        <div id="res1" class="res-box">
+            <div class="res-row" style="border-bottom: 2px solid var(--success); padding-bottom: 10px;"><span>预计净利润:</span><span id="r1_profit" class="val high-green"></span></div>
+            <div class="res-row" style="margin-top:10px;"><span>目标盈利率:</span><span id="r1_rate" class="val" style="color:var(--warning)"></span></div>
             <div class="res-row"><span>持仓总本金:</span><span id="r1_prin" class="val"></span></div>
             <div class="res-row"><span>届时总市值:</span><span id="r1_market" class="val high-blue"></span></div>
-            <div class="res-row"><span>需再涨幅度:</span><span id="r1_up" class="val" style="color:#fa8c16"></span></div>
+            <div class="res-row"><span>距目标需再涨:</span><span id="r1_up" class="val" style="color:var(--warning)"></span></div>
         </div>
     </div>
 </div>
 
 <script>
-// 工具：切换标签
-function switchTab(index) {
-    document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === index));
-    document.querySelectorAll('.content').forEach((c, i) => c.classList.toggle('active', i === index));
+function toggleTheme() {
+    const body = document.body;
+    const current = body.getAttribute('data-theme');
+    body.setAttribute('data-theme', current === 'light' ? 'dark' : 'light');
 }
-
-// 工具：修正输入
+function switchTab(idx) {
+    document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === idx));
+    document.querySelectorAll('.content').forEach((c, i) => c.classList.toggle('active', i === idx));
+}
 function fix(obj) {
+    // 允许输入数字和小数点，防止非合法字符
     obj.value = obj.value.replace(/[^\d.]/g, "");
-    const t = obj.value.split('.');
-    if (t.length > 2) obj.value = t[0] + "." + t.slice(1).join("");
+    const parts = obj.value.split('.');
+    if (parts.length > 2) obj.value = parts[0] + "." + parts.slice(1).join("");
 }
+const fmt = (n) => n.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
-// 工具：格式化
-const fmt = (n, d=2) => n.toLocaleString(undefined, {minimumFractionDigits: d, maximumFractionDigits: d});
-
-// 逻辑1：补仓
 function calcCover() {
     const cost = parseFloat(document.getElementById('c1_cost').value);
     const loss = parseFloat(document.getElementById('c1_loss').value);
-    const add = parseFloat(document.getElementById('c1_add').value);
     const now = parseFloat(document.getElementById('c1_now').value);
-    if ([cost, loss, add, now].some(isNaN)) return alert("请填全");
+    const addMoney = parseFloat(document.getElementById('c1_add_money').value);
+    const addPrice = parseFloat(document.getElementById('c1_add_price').value);
+    if ([cost, loss, now, addMoney, addPrice].some(isNaN)) return alert("请填全数值");
 
     const oldShares = loss / (cost - now);
-    const addShares = add / now;
+    const oldPrin = oldShares * cost;
+    const addShares = addMoney / addPrice;
     const totalShares = oldShares + addShares;
-    const newCost = (oldShares * cost + add) / totalShares;
+    const totalPrin = oldPrin + addMoney;
+    const newCost = totalPrin / totalShares;
+    const postUp = ((newCost / addPrice) - 1) * 100;
+    const dropPercent = ((addPrice / now) - 1) * 100;
 
     document.getElementById('r0_pre_m').innerText = "￥" + fmt(oldShares * now);
-    document.getElementById('r0_post_m').innerText = "￥" + fmt(totalShares * now);
+    document.getElementById('r0_pre_up').innerText = ((cost/now - 1)*100).toFixed(2) + "%";
+    document.getElementById('r0_drop').innerText = (dropPercent >= 0 ? "+" : "") + dropPercent.toFixed(2) + "%";
+    document.getElementById('r0_post_m').innerText = "￥" + fmt(totalShares * addPrice);
     document.getElementById('r0_new_c').innerText = newCost.toFixed(4);
-    document.getElementById('r0_up').innerText = ((newCost/now - 1)*100).toFixed(2) + "%";
+    document.getElementById('r0_post_up').innerText = postUp.toFixed(2) + "%";
     document.getElementById('res0').style.display = 'block';
 }
 
-// 逻辑2：盈利
 function calcProfit() {
     const cost = parseFloat(document.getElementById('c2_cost').value);
     const loss = parseFloat(document.getElementById('c2_loss').value);
     const now = parseFloat(document.getElementById('c2_now').value);
     const target = parseFloat(document.getElementById('c2_target').value);
-    if ([cost, loss, now, target].some(isNaN)) return alert("请填全");
+    if ([cost, loss, now, target].some(isNaN)) return alert("请填全数值");
 
     const shares = loss / (cost - now);
     const principal = shares * cost;
@@ -142,6 +162,5 @@ function calcProfit() {
     document.getElementById('res1').style.display = 'block';
 }
 </script>
-
 </body>
 </html>
