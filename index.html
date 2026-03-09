@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>基金精算助手 - 全能版</title>
+    <title>基金精算助手 - Pro</title>
     <style>
         :root {
             --primary: #007aff; --success: #34c759; --danger: #ff3b30; --warning: #ff9500;
@@ -49,41 +49,43 @@
         <div class="tab" onclick="switchTab(1)">💰 盈利预演</div>
     </div>
 
-    <!-- 模块1：补仓计算 (逻辑同步更新) -->
+    <!-- 模块1：补仓计算 -->
     <div id="tab0" class="content active">
         <div class="group"><label>1. 原持仓成本点位</label><input type="text" inputmode="decimal" id="c1_cost" placeholder="如: 1.5430" oninput="fix(this)"></div>
         <div class="group"><label>2. 当前盈亏金额 (盈利正, 亏损负)</label><input type="text" inputmode="decimal" id="c1_loss" placeholder="亏1000填-1000" oninput="fixWithMinus(this)"></div>
         <div class="group"><label>3. 现在的点位 (实时价格)</label><input type="text" inputmode="decimal" id="c1_now" placeholder="基准价格" oninput="fix(this)"></div>
         
         <div style="background: rgba(255,149,0,0.1); padding:12px; border-radius:12px; border:1px solid var(--warning); margin-top:15px;">
-            <div class="group"><label style="color:var(--warning)">4. 计划加仓金额 (元)</label><input type="text" inputmode="decimal" id="c1_add_money" placeholder="投入金额" oninput="fix(this)"></div>
-            <div class="group" style="margin-bottom:0"><label style="color:var(--warning)">5. 计划加仓点位 (买入价格)</label><input type="text" inputmode="decimal" id="c1_add_price" placeholder="补仓价格" oninput="fix(this)"></div>
+            <div class="group"><label style="color:var(--warning)">4. 计划加仓金额 (元)</label><input type="text" id="c1_add_money" placeholder="投入金额" oninput="fix(this)"></div>
+            <div class="group" style="margin-bottom:0"><label style="color:var(--warning)">5. 计划加仓点位 (买入价格)</label><input type="text" id="c1_add_price" placeholder="补仓点位" oninput="fix(this)"></div>
         </div>
 
-        <button class="btn-calc" onclick="calcCover()">立即计算</button>
+        <button class="btn-calc" onclick="calcCover()">立即对比计算</button>
         
         <div id="res0" class="res-box">
             <div class="res-section">
-                <div class="section-title">当前状态</div>
-                <div class="res-row"><span>当前持仓市值:</span><span id="r0_pre_m" class="val"></span></div>
-                <div class="res-row"><span>回本需涨跌:</span><span id="r0_pre_up" class="val"></span></div>
+                <div class="section-title">当前状态 (未补仓)</div>
+                <div class="res-row"><span>持仓市值:</span><span id="r0_pre_m" class="val"></span></div>
+                <div class="res-row"><span>盈亏率:</span><span id="r0_pre_rate" class="val"></span></div>
             </div>
             <div class="res-section" style="border-top: 1px solid var(--border); padding-top: 10px;">
-                <div class="section-title" style="color:var(--primary)">补仓后预估</div>
+                <div class="section-title" style="color:var(--primary)">补仓后状态 (预估)</div>
                 <div class="res-row"><span>补后总市值:</span><span id="r0_post_m" class="val high-blue"></span></div>
-                <div class="res-row"><span>新回本点位:</span><span id="r0_new_c" class="val high-blue"></span></div>
-                <div class="res-row"><span>补后需再涨:</span><span id="r0_post_up" class="val" style="font-size:16px"></span></div>
+                <div class="res-row"><span>补后盈亏金额:</span><span id="r0_post_loss" class="val"></span></div>
+                <div class="res-row"><span>补后盈亏率:</span><span id="r0_post_rate" class="val"></span></div>
+                <div class="res-row"><span>回本目标点位:</span><span id="r0_new_c" class="val high-blue"></span></div>
+                <div class="res-row"><span>需再涨回本:</span><span id="r0_post_up" class="val high-red" style="font-size:16px"></span></div>
             </div>
         </div>
     </div>
 
-    <!-- 模块2：盈利预演 (核心修正) -->
+    <!-- 模块2：盈利预演 -->
     <div id="tab1" class="content">
-        <div class="group"><label>1. 持仓成本点位</label><input type="text" inputmode="decimal" id="c2_cost" placeholder="如: 1.5430" oninput="fix(this)"></div>
-        <div class="group"><label>2. 当前盈亏金额 (盈利正, 亏损负)</label><input type="text" inputmode="decimal" id="c2_loss" placeholder="盈利200填200, 亏200填-200" oninput="fixWithMinus(this)"></div>
-        <div class="group"><label>3. 现在的点位 (实时价格)</label><input type="text" inputmode="decimal" id="c2_now" placeholder="现价" oninput="fix(this)"></div>
-        <div class="group"><label>4. 预演目标点位</label><input type="text" inputmode="decimal" id="c2_target" placeholder="目标价" oninput="fix(this)"></div>
-        <button class="btn-profit" onclick="calcProfit()">计算盈利预演</button>
+        <div class="group"><label>1. 持仓成本点位</label><input type="text" id="c2_cost" placeholder="如: 1.5430" oninput="fix(this)"></div>
+        <div class="group"><label>2. 当前盈亏金额 (盈利正, 亏损负)</label><input type="text" id="c2_loss" placeholder="如: -1000" oninput="fixWithMinus(this)"></div>
+        <div class="group"><label>3. 现在的点位 (实时价格)</label><input type="text" id="c2_now" placeholder="现价" oninput="fix(this)"></div>
+        <div class="group"><label>4. 预演目标点位</label><input type="text" id="c2_target" placeholder="目标止盈价" oninput="fix(this)"></div>
+        <button class="btn-profit" onclick="calcProfit()">计算盈利详情</button>
         <div id="res1" class="res-box">
             <div class="res-row" style="border-bottom: 2px solid var(--success); padding-bottom: 10px;"><span>预计净利润:</span><span id="r1_profit" class="val high-green"></span></div>
             <div class="res-row" style="margin-top:10px;"><span>目标盈利率:</span><span id="r1_rate" class="val" style="color:var(--warning)"></span></div>
@@ -104,75 +106,75 @@ function switchTab(idx) {
     document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === idx));
     document.querySelectorAll('.content').forEach((c, i) => c.classList.toggle('active', i === idx));
 }
-// 仅允许正小数
 function fix(obj) {
     obj.value = obj.value.replace(/[^\d.]/g, "").replace(/\.{2,}/g, ".");
     const t = obj.value.split('.');
     if (t.length > 2) obj.value = t + "." + t.slice(1).join("");
 }
-// 允许负号（用于盈亏金额）
 function fixWithMinus(obj) {
     obj.value = obj.value.replace(/[^\d.-]/g, "");
-    if (obj.value.indexOf("-") > 0) obj.value = obj.value.replace("-", "");
+    if (obj.value.indexOf("-", 1) !== -1) obj.value = obj.value.substring(0, obj.value.indexOf("-", 1));
 }
 const fmt = (n) => n.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
 function calcCover() {
     const cost = parseFloat(document.getElementById('c1_cost').value);
-    const loss = parseFloat(document.getElementById('c1_loss').value); // 此时loss代表盈亏，盈利为正
+    const loss = parseFloat(document.getElementById('c1_loss').value);
     const now = parseFloat(document.getElementById('c1_now').value);
     const addMoney = parseFloat(document.getElementById('c1_add_money').value);
     const addPrice = parseFloat(document.getElementById('c1_add_price').value);
 
     if ([cost, loss, now, addMoney, addPrice].some(isNaN) || (now === cost)) return alert("数据无效或现价等于成本");
 
-    // 份额 = 盈亏 / (现价 - 成本)
     const shares = loss / (now - cost);
     const oldPrin = shares * cost;
     const addShares = addMoney / addPrice;
     const totalShares = shares + addShares;
     const totalPrin = oldPrin + addMoney;
     const newCost = totalPrin / totalShares;
+    
+    // 补仓后的实时状态 (基于补仓点位计算)
+    const postMarket = totalShares * addPrice;
+    const postLossAmt = postMarket - totalPrin;
+    const postRate = (postLossAmt / totalPrin) * 100;
 
     document.getElementById('r0_pre_m').innerText = "￥" + fmt(shares * now);
-    const preUp = ((cost/now - 1)*100).toFixed(2);
-    document.getElementById('r0_pre_up').innerText = preUp + "%";
-    document.getElementById('r0_pre_up').className = "val " + (preUp > 0 ? "high-red" : "high-green");
+    const preRate = (loss / oldPrin) * 100;
+    document.getElementById('r0_pre_rate').innerText = preRate.toFixed(2) + "%";
+    document.getElementById('r0_pre_rate').className = "val " + (preRate >= 0 ? "high-green" : "high-red");
 
-    document.getElementById('r0_post_m').innerText = "￥" + fmt(totalShares * addPrice);
+    document.getElementById('r0_post_m').innerText = "￥" + fmt(postMarket);
+    document.getElementById('r0_post_loss').innerText = "￥" + fmt(postLossAmt);
+    document.getElementById('r0_post_loss').className = "val " + (postLossAmt >= 0 ? "high-green" : "high-red");
+    document.getElementById('r0_post_rate').innerText = postRate.toFixed(2) + "%";
+    document.getElementById('r0_post_rate').className = "val " + (postRate >= 0 ? "high-green" : "high-red");
+    
     document.getElementById('r0_new_c').innerText = newCost.toFixed(4);
-    const postUp = ((newCost/addPrice - 1)*100).toFixed(2);
-    document.getElementById('r0_post_up').innerText = postUp + "%";
-    document.getElementById('r0_post_up').className = "val " + (postUp > 0 ? "high-red" : "high-green");
+    const postUp = ((newCost / addPrice) - 1) * 100;
+    document.getElementById('r0_post_up').innerText = postUp.toFixed(2) + "%";
     
     document.getElementById('res0').style.display = 'block';
 }
 
 function calcProfit() {
     const cost = parseFloat(document.getElementById('c2_cost').value);
-    const loss = parseFloat(document.getElementById('c2_loss').value); // 盈亏金额
+    const loss = parseFloat(document.getElementById('c2_loss').value);
     const now = parseFloat(document.getElementById('c2_now').value);
     const target = parseFloat(document.getElementById('c2_target').value);
+    if ([cost, loss, now, target].some(isNaN) || (now === cost)) return alert("请填全数值");
 
-    if ([cost, loss, now, target].some(isNaN) || (now === cost)) {
-        alert("请输入完整数值，且现价不能等于成本价（否则无法反推份额）");
-        return;
-    }
-
-    // 核心反推逻辑：份额 = 盈亏 / (当前价 - 成本)
     const shares = loss / (now - cost);
     const principal = shares * cost;
     const targetMarket = shares * target;
     const profit = targetMarket - principal;
-    const profitRate = (profit / principal) * 100;
+    const rate = (profit / principal) * 100;
 
     document.getElementById('r1_profit').innerText = "￥" + fmt(profit);
     document.getElementById('r1_profit').className = "val " + (profit >= 0 ? "high-green" : "high-red");
-    document.getElementById('r1_rate').innerText = profitRate.toFixed(2) + "%";
+    document.getElementById('r1_rate').innerText = rate.toFixed(2) + "%";
     document.getElementById('r1_prin').innerText = "￥" + fmt(principal);
     document.getElementById('r1_market').innerText = "￥" + fmt(targetMarket);
     document.getElementById('r1_up').innerText = ((target/now - 1)*100).toFixed(2) + "%";
-    
     document.getElementById('res1').style.display = 'block';
 }
 </script>
