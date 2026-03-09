@@ -67,11 +67,11 @@
         <div class="tab" onclick="switchTab(1)">💰 盈利预演</div>
     </div>
 
-    <!-- 补仓计算 -->
     <div id="tabContent0" class="content active">
         <div class="input-grid">
             <div style="grid-column: span 2;"><label>1. 原持仓成本价格</label><input type="text" inputmode="decimal" id="c1_cost" oninput="fix(this)"></div>
-            <div><label>2. 当前盈亏金额</label><input type="text" inputmode="decimal" id="c1_loss" placeholder="亏损填负" oninput="fixWithMinus(this)"></div>
+            <!-- 修复：盈亏金额使用 text 模式弹出完整键盘 -->
+            <div><label>2. 当前盈亏金额</label><input type="text" inputmode="text" id="c1_loss" placeholder="盈利填正, 亏损填负" oninput="fixWithMinus(this)"></div>
             <div><label>3. 现在的价格</label><input type="text" inputmode="decimal" id="c1_now" oninput="fix(this)"></div>
         </div>
         <div class="plan-box">
@@ -103,11 +103,11 @@
         </div>
     </div>
 
-    <!-- 盈利预演 -->
     <div id="tabContent1" class="content">
         <div class="input-grid">
             <div style="grid-column: span 2;"><label>1. 持仓成本价格</label><input type="text" inputmode="decimal" id="c2_cost" oninput="fix(this)"></div>
-            <div><label>2. 当前盈亏金额</label><input type="text" inputmode="decimal" id="c2_loss" oninput="fixWithMinus(this)"></div>
+            <!-- 修复：盈亏金额使用 text 模式弹出完整键盘 -->
+            <div><label>2. 当前盈亏金额</label><input type="text" inputmode="text" id="c2_loss" placeholder="盈利正, 亏损负" oninput="fixWithMinus(this)"></div>
             <div><label>3. 现在的价格</label><input type="text" inputmode="decimal" id="c2_now" oninput="fix(this)"></div>
             <div style="grid-column: span 2;"><label>4. 预演目标价格</label><input type="text" inputmode="decimal" id="c2_target" oninput="fix(this)"></div>
         </div>
@@ -130,28 +130,38 @@
         </div>
     </div>
 
-    <div class="footer-tools">
-        <button class="btn-clear" onclick="clearAllData()">🗑️ 清空历史数据</button>
-    </div>
+    <div class="footer-tools"><button class="btn-clear" onclick="clearAllData()">🗑️ 清空历史数据</button></div>
 </div>
 
 <script>
 window.onload = function() {
-    const saved = JSON.parse(localStorage.getItem('fundDataFinalV8') || '{}');
+    const saved = JSON.parse(localStorage.getItem('fundDataFinalV9') || '{}');
     for (let id in saved) { if(document.getElementById(id)) document.getElementById(id).value = saved[id]; }
-    switchTab(parseInt(localStorage.getItem('fundTabFinalV8') || 0));
+    switchTab(parseInt(localStorage.getItem('fundTabFinalV9') || 0));
 };
 function switchTab(idx) {
     document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === idx));
     document.querySelectorAll('.content').forEach((c, i) => c.classList.toggle('active', i === idx));
-    localStorage.setItem('fundTabFinalV8', idx);
+    localStorage.setItem('fundTabFinalV9', idx);
 }
 function fix(obj) { obj.value = obj.value.replace(/[^\d.]/g, "").replace(/\.{2,}/g, "."); save(); }
-function fixWithMinus(obj) { obj.value = obj.value.replace(/[^\d.-]/g, ""); save(); }
+
+// 修复盈亏输入的逻辑：允许第一个字符为负号，或清除多余负号
+function fixWithMinus(obj) {
+    let val = obj.value.replace(/[^\d.-]/g, ""); // 只留数字、点、负号
+    // 确保负号只出现在第一位
+    if (val.indexOf("-", 1) !== -1) val = val[0] + val.slice(1).replace(/-/g, "");
+    // 确保只有一个点
+    const parts = val.split('.');
+    if (parts.length > 2) val = parts[0] + "." + parts.slice(1).join("");
+    obj.value = val;
+    save();
+}
+
 function save() {
     const data = {};
     document.querySelectorAll('input').forEach(i => data[i.id] = i.value);
-    localStorage.setItem('fundDataFinalV8', JSON.stringify(data));
+    localStorage.setItem('fundDataFinalV9', JSON.stringify(data));
 }
 const fmt = (n) => n.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
 function getTime() { return `计算时间: ${new Date().toLocaleString()}`; }
@@ -176,20 +186,10 @@ function calcProfit() {
     const cost = parseFloat(document.getElementById('c2_cost').value), loss = parseFloat(document.getElementById('c2_loss').value), now = parseFloat(document.getElementById('c2_now').value), target = parseFloat(document.getElementById('c2_target').value);
     if ([cost, loss, now, target].some(isNaN) || (now === cost)) return alert("输入有误");
     const shares = loss / (now - cost), principal = shares * cost, targetM = shares * target, p = targetM - principal, pRate = (p/principal*100).toFixed(2);
-    
-    const pEl = document.getElementById('r1_profit'); 
-    pEl.innerText = "￥" + fmt(p); 
-    pEl.className = "res-val big-val " + (p >= 0 ? "up-red" : "down-green");
-    
-    const rEl = document.getElementById('r1_rate'); 
-    rEl.innerText = pRate + "%"; 
-    rEl.className = "res-val " + (pRate >= 0 ? "up-red" : "down-green");
-    
-    document.getElementById('r1_prin').innerText = "￥" + fmt(principal); 
-    document.getElementById('r1_market').innerText = "￥" + fmt(targetM); 
-    document.getElementById('r1_up').innerText = ((target/now - 1)*100).toFixed(2) + "%";
-    document.getElementById('time1').innerText = getTime(); 
-    document.getElementById('res1').style.display = 'block';
+    const pEl = document.getElementById('r1_profit'); pEl.innerText = "￥" + fmt(p); pEl.className = "res-val big-val " + (p >= 0 ? "up-red" : "down-green");
+    const rEl = document.getElementById('r1_rate'); rEl.innerText = pRate + "%"; rEl.className = "res-val " + (pRate >= 0 ? "up-red" : "down-green");
+    document.getElementById('r1_prin').innerText = "￥" + fmt(principal); document.getElementById('r1_market').innerText = "￥" + fmt(targetM); document.getElementById('r1_up').innerText = ((target/now - 1)*100).toFixed(2) + "%";
+    document.getElementById('time1').innerText = getTime(); document.getElementById('res1').style.display = 'block';
 }
 function toggleTheme() { document.body.setAttribute('data-theme', document.body.getAttribute('data-theme') === 'light' ? 'dark' : 'light'); }
 function clearAllData() { if(confirm("确定清空？")) { localStorage.clear(); location.reload(); } }
