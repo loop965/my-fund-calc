@@ -1,0 +1,114 @@
+:root{
+--ios-blue:#007AFF;
+--ios-bg:#F2F2F7;
+--ios-card:#FFFFFF;
+--ios-text:#1C1C1E;
+--ios-sub:#8E8E93;
+--ios-sep:#E5E5EA;
+}
+
+*{
+box-sizing:border-box;
+-webkit-tap-highlight-color:transparent;
+}
+
+body{
+margin:0;
+font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial;
+background:var(--ios-bg);
+color:var(--ios-text);
+}
+
+/* NAV BAR */
+
+.ios-navbar{
+position:sticky;
+top:0;
+background:rgba(255,255,255,.9);
+backdrop-filter:blur(20px);
+padding:16px;
+font-size:28px;
+font-weight:700;
+border-bottom:1px solid var(--ios-sep);
+z-index:10;
+}
+
+/* CONTENT */
+
+.ios-container{
+padding:16px;
+padding-bottom:90px;
+}
+
+/* CARD */
+
+.ios-card{
+background:var(--ios-card);
+border-radius:14px;
+padding:16px;
+margin-bottom:16px;
+box-shadow:0 2px 6px rgba(0,0,0,.05);
+}
+
+/* LIST */
+
+.ios-list{
+background:var(--ios-card);
+border-radius:14px;
+overflow:hidden;
+}
+
+.ios-cell{
+padding:14px 16px;
+border-bottom:1px solid var(--ios-sep);
+display:flex;
+justify-content:space-between;
+align-items:center;
+font-size:16px;
+}
+
+.ios-cell:last-child{
+border-bottom:none;
+}
+
+/* BUTTON */
+
+.ios-btn{
+background:var(--ios-blue);
+color:white;
+border:none;
+padding:12px;
+border-radius:12px;
+font-size:16px;
+width:100%;
+}
+
+/* TAB BAR */
+
+.ios-tabbar{
+position:fixed;
+bottom:0;
+left:0;
+right:0;
+height:70px;
+background:rgba(255,255,255,.9);
+backdrop-filter:blur(20px);
+border-top:1px solid var(--ios-sep);
+display:flex;
+justify-content:space-around;
+align-items:center;
+}
+
+.ios-tabbar a{
+text-decoration:none;
+font-size:12px;
+color:var(--ios-sub);
+display:flex;
+flex-direction:column;
+align-items:center;
+}
+
+.ios-tabbar a.active{
+color:var(--ios-blue);
+font-weight:600;
+}
