@@ -21,8 +21,8 @@
             --group-bg: #E5E5EA;
             --profit-text: #FF3B30;
             --loss-text: #34C759;
-            --profit-bg: #FFF2F2;
-            --loss-bg: #F2F9F2;
+            --profit-bg: #FFE5E5;
+            --loss-bg: #E5F5E5;
             --dark-profit: #FF6B6B;
             --dark-loss: #6BCB77;
             --ios-blue: #007AFF;
@@ -308,7 +308,7 @@
             border: none;
             width: 40px;
             height: 40px;
-            border-radius: 50%;
+            border-radius: 10px;
             cursor: pointer;
             color: var(--ios-blue);
             display: flex;
@@ -401,14 +401,9 @@
         }
 
         .cell-selected {
-            background: var(--ios-blue) !important;
+            background: inherit !important;
             z-index: 2;
-        }
-
-        .cell-selected .d-num,
-        .cell-selected .d-val,
-        .cell-selected.is-today .d-num {
-            color: white !important;
+            box-shadow: 0 0 0 2px var(--ios-blue);
         }
 
         .cell-p {
@@ -588,8 +583,8 @@
             <div class="pop-row"><span>同花顺</span><span id="pThs" style="font-weight:600;"></span></div>
             <div class="pop-row" style="border:none; padding-top:20px;"><span style="font-weight:600; color:var(--text-sub);">合计</span><span id="pAll" style="font-size:26px; font-weight:700; letter-spacing:-0.5px;"></span></div>
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:24px;">
-                <button class="save-btn" style="background:var(--group-bg); color:var(--ios-blue); margin:0;" onclick="closePop()">完成</button>
                 <button class="save-btn" style="background:var(--profit-bg); color:var(--profit-text); margin:0;" id="delB">删除</button>
+                <button class="save-btn" style="background:var(--group-bg); color:var(--ios-blue); margin:0;" onclick="closePop()">完成</button>
             </div>
         </div>
     </div>
