@@ -53,7 +53,7 @@
             background-color: var(--bg-page);
             margin: 0;
             padding: 0;
-            padding-top: max(12px, env(safe-area-inset-top));
+            padding-top: max(8px, env(safe-area-inset-top));
             padding-bottom: env(safe-area-inset-bottom);
             color: var(--text-main);
             letter-spacing: -0.3px;
@@ -108,7 +108,7 @@
             background: var(--card-white);
             border-radius: 20px;
             overflow: hidden;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
             box-shadow: 0 0 0 0.5px rgba(0,0,0,0.05);
         }
 
@@ -221,7 +221,7 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
         }
 
         .stat-item {
@@ -267,7 +267,7 @@
         .tool-btns {
             display: flex;
             gap: 12px;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
         }
 
         .btn-flex {
@@ -512,14 +512,8 @@
 </head>
 <body data-theme="light">
     <div class="app-container">
-        <!-- 导航头部 -->
-        <div class="nav-header">
-            <button class="back-btn" onclick="location.href='index.html'">‹</button>
-            <h1 class="page-title">理财记录</h1>
-        </div>
 
         <!-- 录入面板 -->
-        <div class="section-header">新增记录</div>
         <div class="card-group">
             <div class="card-group-inner">
                 <div class="field-group">
@@ -545,7 +539,6 @@
         </div>
 
         <!-- 统计面板 -->
-        <div class="section-header">收益概览</div>
         <div class="stat-bar">
             <div class="stat-item">
                 <span class="stat-label" id="mLabel">--月累计</span>
@@ -558,7 +551,6 @@
         </div>
 
         <!-- 主视图 -->
-        <div class="section-header">日历</div>
         <div class="card-group">
             <div class="card-group-inner">
                 <div class="cal-head">
