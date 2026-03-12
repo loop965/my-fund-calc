@@ -434,7 +434,12 @@
 
         .cell-month {
             height: 72px;
-            background: var(--group-bg);
+            background: #F9F9F9;
+        }
+
+        :root[data-theme='dark'] .cell-day,
+        :root[data-theme='dark'] .cell-month {
+            background: #1C1C1E;
         }
 
         .cell-selected {
