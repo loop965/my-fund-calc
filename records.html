@@ -354,6 +354,34 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.06);
         }
 
+        /* 账户切换器 - iOS 17 风格 */
+        .account-switcher {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+        }
+
+        .ac-btn {
+            border: none;
+            background: var(--group-bg);
+            padding: 12px 8px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 14px;
+            cursor: pointer;
+            color: var(--text-sub);
+            transition: all 0.2s ease;
+        }
+
+        .ac-btn.active {
+            background: var(--ios-blue);
+            color: white;
+        }
+
+        .ac-btn:active {
+            opacity: 0.8;
+        }
+
         /* 日历网格 - iOS 17 风格 */
         .grid {
             display: grid;
@@ -567,6 +595,17 @@
             </div>
         </div>
 
+        <!-- 账户切换 -->
+        <div class="card-group" style="margin-bottom:8px;">
+            <div class="card-group-inner">
+                <div class="account-switcher">
+                    <button class="ac-btn active" id="ac-all" onclick="switchAccount('all')">全部</button>
+                    <button class="ac-btn" id="ac-alipay" onclick="switchAccount('alipay')">支付宝</button>
+                    <button class="ac-btn" id="ac-ths" onclick="switchAccount('ths')">同花顺</button>
+                </div>
+            </div>
+        </div>
+
         <!-- 功能按钮组 -->
         <div class="tool-btns">
             <input type="file" id="csvFile" onchange="impCSV(this)">
@@ -593,7 +632,7 @@
     </div>
 
     <script>
-        let vDate = new Date(), viewMode = 'day', yearPrivate = false;
+        let vDate = new Date(), viewMode = 'day', yearPrivate = false, accountMode = 'all';
         const KEY = 'fin_v_final_v24';
 
         window.onload = () => {
@@ -607,9 +646,22 @@
 
         function switchView(mode) {
             viewMode = mode;
-            document.querySelectorAll('.sw-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('#sw-day, #sw-month, #sw-year').forEach(b => b.classList.remove('active'));
             document.getElementById('sw-' + mode).classList.add('active');
             render();
+        }
+
+        function switchAccount(mode) {
+            accountMode = mode;
+            document.querySelectorAll('.ac-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('ac-' + mode).classList.add('active');
+            render();
+        }
+
+        function getValueForAccount(record) {
+            if (accountMode === 'alipay') return parseFloat(record.a || 0);
+            if (accountMode === 'ths') return parseFloat(record.t || 0);
+            return parseFloat(record.total || 0);
         }
 
         function tSign(id) { const e = document.getElementById(id); if(e.value && e.value !== "0") e.value = (parseFloat(e.value)*-1).toString(); }
@@ -639,7 +691,7 @@
 
             let mT = 0, yT = 0;
             Object.keys(db).forEach(k => {
-                const val = parseFloat(db[k].total);
+                const val = getValueForAccount(db[k]);
                 if(k.startsWith(curY + '-')) {
                     yT += val;
                     const monthKey = `${curY}-${String(curM+1).padStart(2,'0')}`;
@@ -647,8 +699,9 @@
                 }
             });
 
-            document.getElementById('mLabel').innerText = (curM+1)+'月累计';
-            document.getElementById('yLabel').innerText = curY+'年度收益';
+            const accountLabel = accountMode === 'all' ? '' : (accountMode === 'alipay' ? '（支付宝）' : '（同花顺）');
+            document.getElementById('mLabel').innerText = (curM+1)+'月累计' + accountLabel;
+            document.getElementById('yLabel').innerText = curY+'年度收益' + accountLabel;
             const f = (v) => v.toLocaleString(undefined,{minimumFractionDigits:2});
             const mValEl = document.getElementById('mTotal');
             mValEl.innerText = '¥ ' + f(mT);
@@ -686,8 +739,14 @@
                 if (isT) cell.classList.add('is-today');
                 cell.innerHTML = `<div class="d-num">${d}</div>`;
                 if(r) {
-                    const v = parseFloat(r.total); cell.classList.add(v>=0?'cell-p':'cell-l');
-                    cell.innerHTML += `<div class="d-val">${v>=0?'+':''}${Math.round(v)}</div>`;
+                    const v = getValueForAccount(r);
+                    const hasValue = accountMode === 'all' ||
+                                   (accountMode === 'alipay' && r.a !== 0) ||
+                                   (accountMode === 'ths' && r.t !== 0);
+                    if (hasValue) {
+                        cell.classList.add(v>=0?'cell-p':'cell-l');
+                        cell.innerHTML += `<div class="d-val">${v>=0?'+':''}${Math.round(v)}</div>`;
+                    }
                     cell.onclick = () => ds === selectedDate ? showPop(ds, r) : (document.getElementById('targetDate').value = ds, render());
                 } else {
                     cell.onclick = () => { document.getElementById('targetDate').value = ds; render(); };
@@ -702,7 +761,15 @@
             for(let i=1; i<=12; i++) {
                 let mSum = 0, has = false;
                 const mPrefix = `${y}-${String(i).padStart(2,'0')}`;
-                Object.keys(db).forEach(k => { if(k.startsWith(mPrefix)) { mSum += parseFloat(db[k].total); has = true; } });
+                Object.keys(db).forEach(k => {
+                    if(k.startsWith(mPrefix)) {
+                        const v = getValueForAccount(db[k]);
+                        mSum += v;
+                        if (accountMode === 'all') has = true;
+                        else if (accountMode === 'alipay' && db[k].a !== 0) has = true;
+                        else if (accountMode === 'ths' && db[k].t !== 0) has = true;
+                    }
+                });
                 const cell = document.createElement('div'); cell.className = 'cell cell-month';
                 if(has) { cell.classList.add(mSum>=0?'cell-p':'cell-l'); cell.innerHTML = `<div class="d-num" style="font-size:15px">${i}月</div><div class="d-val">${(mSum>=0?'+':'')+Math.round(mSum)}</div>`; }
                 else { cell.innerHTML = `<div class="d-num" style="font-size:15px; color:var(--text-tertiary)">${i}月</div><div class="d-val" style="color:var(--text-tertiary)">0</div>`; }
@@ -716,7 +783,15 @@
             document.getElementById('vTitle').innerText = `年度对比`;
             for(let i = y - 2; i <= y + 3; i++) {
                 let ySum = 0, has = false;
-                Object.keys(db).forEach(k => { if(k.startsWith(i + '-')) { ySum += parseFloat(db[k].total); has = true; } });
+                Object.keys(db).forEach(k => {
+                    if(k.startsWith(i + '-')) {
+                        const v = getValueForAccount(db[k]);
+                        ySum += v;
+                        if (accountMode === 'all') has = true;
+                        else if (accountMode === 'alipay' && db[k].a !== 0) has = true;
+                        else if (accountMode === 'ths' && db[k].t !== 0) has = true;
+                    }
+                });
                 const cell = document.createElement('div'); cell.className = 'cell cell-month';
                 if(has) { cell.classList.add(ySum>=0?'cell-p':'cell-l'); cell.innerHTML = `<div class="d-num" style="font-size:15px">${i}</div><div class="d-val">${(ySum>=0?'+':'')+Math.round(ySum)}</div>`; }
                 else { cell.innerHTML = `<div class="d-num" style="font-size:15px; color:var(--text-tertiary)">${i}</div><div class="d-val" style="color:var(--text-tertiary)">0</div>`; }
