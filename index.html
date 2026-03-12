@@ -35,7 +35,7 @@
             --icon-radius: 16px;
         }
 
-        [data-theme='dark'] {
+        :root[data-theme='dark'] {
             --bg-color: #000000;
             --card-bg: #1C1C1E;
             --group-bg: #2C2C2E;
@@ -51,6 +51,12 @@
             box-sizing: border-box;
         }
 
+        html {
+            background-color: #F2F2F7;
+        }
+        html[data-theme='dark'] {
+            background-color: #000000;
+        }
         body {
             font-family: -apple-system, "SF Pro Display", "SF Pro Text", "PingFang SC", "Helvetica Neue", sans-serif;
             background-color: var(--bg-color);
@@ -61,7 +67,6 @@
             align-items: center;
             min-height: 100vh;
             min-height: 100dvh;
-            transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             padding-top: env(safe-area-inset-top);
             padding-bottom: env(safe-area-inset-bottom);
         }
@@ -78,7 +83,7 @@
             padding-top: max(20px, env(safe-area-inset-top));
             display: flex;
             justify-content: space-between;
-            align-items: flex-end;
+            align-items: center;
         }
 
         .header-text h1 {
@@ -207,8 +212,15 @@
             height: max(20px, env(safe-area-inset-bottom));
         }
     </style>
+    <script>
+        // 在页面渲染前立即设置主题，防止闪烁
+        (function() {
+            const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        })();
+    </script>
 </head>
-<body data-theme="light">
+<body>
 
     <div class="container">
         <div class="header-wrapper">
@@ -264,22 +276,23 @@
 
     <script>
         function toggleTheme() {
-            const body = document.body;
-            const currentTheme = body.getAttribute('data-theme');
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
             const nextTheme = currentTheme === 'light' ? 'dark' : 'light';
-            body.setAttribute('data-theme', nextTheme);
+            html.setAttribute('data-theme', nextTheme);
             document.getElementById('modeBtn').innerText = nextTheme === 'light' ? '🌗' : '☀️';
         }
 
-        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            document.body.setAttribute('data-theme', 'dark');
-            document.getElementById('modeBtn').innerText = '☀️';
-        }
+        // 初始化按钮状态
+        (function() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            document.getElementById('modeBtn').innerText = isDark ? '☀️' : '🌗';
+        })();
 
         // 监听系统主题变化
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
             const newTheme = e.matches ? 'dark' : 'light';
-            document.body.setAttribute('data-theme', newTheme);
+            document.documentElement.setAttribute('data-theme', newTheme);
             document.getElementById('modeBtn').innerText = newTheme === 'light' ? '🌗' : '☀️';
         });
     </script>
