@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>流光记账本 - 修复版</title>
+    <script src="https://cdn.jsdelivr.net"></script>
+    <style>
+        :root { 
+            --primary: #6366f1; --secondary: #a855f7; --bg: #f8fafc; 
+            --text-main: #1e293b; --text-sub: #64748b; --white: #ffffff;
+            --success: #10b981; --danger: #ef4444;
+        }
+        body { font-family: "PingFang SC", sans-serif; background: var(--bg); margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 440px; }
+        .dashboard {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            padding: 24px; border-radius: 28px; color: white;
+            box-shadow: 0 12px 24px rgba(99, 102, 241, 0.25);
+            margin-bottom: 25px; position: relative; overflow: hidden;
+        }
+        .stats-row { display: flex; gap: 20px; align-items: center; margin-bottom: 20px; }
+        .stat-item { flex: 1; }
+        .stat-item p { font-size: 11px; opacity: 0.8; margin: 0 0 5px 0; letter-spacing: 1px; }
+        .stat-item h3 { font-size: 22px; margin: 0; font-weight: 700; }
+        .divider { width: 1px; background: rgba(255,255,255,0.2); height: 40px; }
+        .chart-box { width: 70px; height: 70px; background: rgba(255, 255, 255, 0.15); padding: 8px; border-radius: 18px; backdrop-filter: blur(10px); }
+        .balance-bar {
+            background: rgba(255, 255, 255, 0.12); padding: 12px 18px; border-radius: 16px;
+            display: flex; justify-content: space-between; align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .balance-bar span { font-size: 13px; opacity: 0.9; }
+        .balance-value { font-weight: 700; font-size: 18px; }
+        .pos-gain { color: #86efac; }
+        .neg-loss { color: #fca5a5; }
+        .input-card { background: var(--white); padding: 20px; border-radius: 24px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
+        .row { display: flex; gap: 10px; margin-bottom: 12px; }
+        input, select { background: #f1f5f9; border: none; padding: 12px; border-radius: 12px; font-size: 14px; flex: 1; min-width: 0; outline: none;}
+        .btn-add { width: 100%; background: var(--text-main); color: var(--white); border: none; padding: 14px; border-radius: 12px; font-weight: 600; cursor: pointer; }
+        .date-header { display: flex; justify-content: space-between; padding: 0 10px; margin-bottom: 10px; margin-top: 15px;}
+        .date-text { font-size: 14px; font-weight: 700; color: var(--text-main); }
+        .day-stat { font-size: 11px; color: var(--text-sub); }
+        .card { background: var(--white); padding: 15px; border-radius: 20px; display: flex; align-items: center; margin-bottom: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+        .category-icon { width: 42px; height: 42px; border-radius: 14px; background: #f8fafc; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-right: 12px; }
+        .card-info { flex: 1; }
+        .card-info .desc { font-size: 14px; font-weight: 600; color: var(--text-main); }
+        .card-info .time { font-size: 11px; color: var(--text-sub); }
+        .card-right { text-align: right; }
+        .amt { font-size: 15px; font-weight: 700; }
+        .amt-income { color: var(--success); }
+        .del-btn { font-size: 11px; color: #cbd5e1; cursor: pointer; margin-top: 4px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="dashboard">
+        <div class="stats-row">
+            <div class="stat-item">
+                <p id="label-exp">--月支出</p>
+                <h3 id="month-expense">¥ 0.00</h3>
+            </div>
+            <div class="divider"></div>
+            <div class="stat-item">
+                <p id="label-inc">--月收入</p>
+                <h3 id="month-income">¥ 0.00</h3>
+            </div>
+            <div class="chart-box"><canvas id="expenseChart"></canvas></div>
+        </div>
+        <div class="balance-bar">
+            <span>本月结余 (Net)</span>
+            <div id="month-balance" class="balance-value">¥ 0.00</div>
+        </div>
+    </div>
+
+    <div class="input-card">
+        <div class="row">
+            <input type="date" id="date-input">
+            <input type="text" id="desc" placeholder="备注">
+        </div>
+        <div class="row">
+            <input type="number" id="amount" placeholder="0.00">
+            <select id="category">
+                <option value="餐饮" data-icon="🍔">🍔 餐饮</option>
+                <option value="交通" data-icon="🚗">🚗 交通</option>
+                <option value="购物" data-icon="🛍️">🛍️ 购物</option>
+                <option value="娱乐" data-icon="🎮">🎮 娱乐</option>
+                <option value="其他" data-icon="📦">📦 其他</option>
+                <option value="收入" data-icon="💰">💰 收入</option>
+            </select>
+        </div>
+        <button class="btn-add" onclick="addRecord()">确认入账</button>
+    </div>
+    <div id="list-container"></div>
+</div>
+
+<script>
+    document.getElementById('date-input').valueAsDate = new Date();
+    let records = JSON.parse(localStorage.getItem('my_ledger_vfinal')) || [];
+    let myChart = null;
+
+    function addRecord() {
+        const date = document.getElementById('date-input').value;
+        const desc = document.getElementById('desc').value || '未命名记录';
+        const amount = parseFloat(document.getElementById('amount').value);
+        const select = document.getElementById('category');
+        if (!date || isNaN(amount)) return alert('请输入金额');
+
+        records.push({
+            id: Date.now(),
+            date, desc, amount,
+            category: select.value,
+            icon: select.options[select.selectedIndex].dataset.icon,
+            time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+        });
+        records.sort((a, b) => new Date(b.date) - new Date(a.date) || b.id - a.id);
+        saveAndRender();
+        document.getElementById('desc').value = '';
+        document.getElementById('amount').value = '';
+    }
+
+    function deleteRecord(id) {
+        if(confirm('确定删除？')) { records = records.filter(r => r.id !== id); saveAndRender(); }
+    }
+
+    function saveAndRender() {
+        localStorage.setItem('my_ledger_vfinal', JSON.stringify(records));
+        render();
+    }
+
+    function render() {
+        const container = document.getElementById('list-container');
+        container.innerHTML = '';
+        const now = new Date();
+        const curM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        let mExp = 0, mInc = 0, chartData = {};
+
+        document.getElementById('label-exp').innerText = (now.getMonth()+1) + '月支出';
+        document.getElementById('label-inc').innerText = (now.getMonth()+1) + '月收入';
+
+        const groups = records.reduce((acc, r) => { (acc[r.date] = acc[r.date] || []).push(r); return acc; }, {});
+
+        Object.keys(groups).forEach(date => {
+            let dExp = 0, dInc = 0;
+            const isCur = date.startsWith(curM);
+            const cardsHtml = groups[date].map(r => {
+                const isInc = r.category === '收入';
+                if(isInc) { dInc += r.amount; if(isCur) mInc += r.amount; } 
+                else { dExp += r.amount; if(isCur) { mExp += r.amount; chartData[r.category] = (chartData[r.category] || 0) + r.amount; } }
+                
+                return `<div class="card">
+                    <div class="category-icon">${r.icon}</div>
+                    <div class="card-info"><span class="desc">${r.desc}</span><span class="time">${r.time}</span></div>
+                    <div class="card-right">
+                        <div class="amt ${isInc ? 'amt-income' : ''}">${isInc?'+':'-'}${r.amount.toFixed(2)}</div>
+                        <div class="del-btn" onclick="deleteRecord(${r.id})">删除</div>
+                    </div>
+                </div>`;
+            }).join('');
+
+            container.innerHTML += `<div class="day-group">
+                <div class="date-header"><span class="date-text">${date}</span><span class="day-stat">支: ${dExp.toFixed(2)} / 收: ${dInc.toFixed(2)}</span></div>
+                ${cardsHtml}
+            </div>`;
+        });
+
+        const balance = mInc - mExp;
+        const balEl = document.getElementById('month-balance');
+        balEl.innerText = `¥ ${balance.toFixed(2)}`;
+        balEl.className = `balance-value ${balance >= 0 ? 'pos-gain' : 'neg-loss'}`;
+        document.getElementById('month-expense').innerText = `¥ ${mExp.toFixed(2)}`;
+        document.getElementById('month-income').innerText = `¥ ${mInc.toFixed(2)}`;
+        updateChart(chartData);
+    }
+
+    function updateChart(data) {
+        const ctx = document.getElementById('expenseChart').getContext('2d');
+        if (myChart) myChart.destroy();
+        const hasData = Object.keys(data).length > 0;
+        myChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(data),
+                datasets: [{
+                    data: hasData ? Object.values(data) : [1], // 修复：这里加了默认值 [1]
+                    backgroundColor: hasData ? ['#ffffff', '#e0e7ff', '#c7d2fe', '#a5b4fc'] : ['rgba(255,255,255,0.2)'],
+                    borderWidth: 0
+                }]
+            },
+            options: { cutout: '75%', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        });
+    }
+    render();
+</script>
+</body>
+</html>
