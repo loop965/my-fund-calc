@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>极简本地记账本 - 手机适配版</title>
+    <title>流光记账本 - 视觉优化版</title>
     <style>
         :root { 
-            --primary: #6366f1; --secondary: #a855f7; --bg: #f0f2f5; 
+            --primary: #6366f1; --secondary: #a855f7; --bg: #f4f6f9; 
             --text-main: #1e293b; --text-sub: #64748b; --white: #ffffff;
             --success: #10b981; --danger: #ef4444;
         }
 
-        * { box-sizing: border-box; } /* 核心：防止任何元素撑出屏幕 */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         body { 
             font-family: -apple-system, "PingFang SC", sans-serif; 
@@ -20,7 +20,7 @@
             padding: 15px; 
             display: flex; 
             justify-content: center; 
-            overflow-x: hidden; /* 禁止横向滚动 */
+            overflow-x: hidden;
         }
 
         .container { width: 100%; max-width: 440px; }
@@ -28,96 +28,91 @@
         /* --- Dashboard 看板 --- */
         .dashboard {
             background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            padding: 24px; border-radius: 24px; color: white;
-            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.15);
+            padding: 24px; border-radius: 26px; color: white;
+            box-shadow: 0 12px 24px rgba(99, 102, 241, 0.2);
             margin-bottom: 20px;
         }
         
-        .stats-row { display: flex; justify-content: space-between; margin-bottom: 20px; }
-        .stat-item p { font-size: 11px; opacity: 0.8; margin: 0 0 5px 0; }
-        .stat-item h3 { font-size: 24px; margin: 0; font-weight: 700; }
+        .stats-row { display: flex; justify-content: space-between; margin-bottom: 18px; }
+        .stat-item p { font-size: 11px; opacity: 0.85; margin: 0 0 4px 0; letter-spacing: 0.5px; }
+        .stat-item h3 { font-size: 24px; margin: 0; font-weight: 700; letter-spacing: -0.5px; }
 
-        /* 纯 CSS 统计条 */
+        /* 分类统计进度条：加深颜色方案 */
         .chart-pure-css { margin-top: 15px; }
         .progress-stack { 
-            height: 8px; background: rgba(255,255,255,0.15); 
-            border-radius: 4px; display: flex; overflow: hidden; margin-bottom: 8px;
+            height: 10px; background: rgba(0,0,0,0.1); /* 底色加深 */
+            border-radius: 6px; display: flex; overflow: hidden; margin-bottom: 10px;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
         }
-        .progress-segment { height: 100%; transition: width 0.5s ease; }
-        .chart-labels { display: flex; flex-wrap: wrap; gap: 8px; font-size: 10px; }
-        .label-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 4px; }
+        .progress-segment { height: 100%; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+        .chart-labels { display: flex; flex-wrap: wrap; gap: 10px; font-size: 11px; }
+        .label-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
 
         .balance-bar {
-            background: rgba(255, 255, 255, 0.12); padding: 12px 18px; border-radius: 16px;
+            background: rgba(255, 255, 255, 0.15); padding: 14px 18px; border-radius: 18px;
             display: flex; justify-content: space-between; align-items: center;
-            border: 1px solid rgba(255, 255, 255, 0.1); margin-top: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2); margin-top: 18px;
+            backdrop-filter: blur(5px);
         }
         .balance-value { font-weight: 700; font-size: 18px; }
 
-        /* --- 输入区适配 --- */
-        .input-card { background: var(--white); padding: 20px; border-radius: 20px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+        /* --- 输入表单：强制左对齐 --- */
+        .input-card { background: var(--white); padding: 20px; border-radius: 22px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.04); }
         
-        .row { 
-            display: flex; 
-            gap: 10px; 
-            margin-bottom: 12px; 
-            width: 100%;
-        }
+        .row { display: flex; gap: 12px; margin-bottom: 12px; width: 100%; }
 
-        /* 关键：手机端自适应逻辑 */
         @media (max-width: 480px) {
-            .row { flex-direction: column; gap: 10px; } /* 手机端强制换行 */
-            .dashboard { padding: 20px; }
-            .stat-item h3 { font-size: 20px; }
+            .row { flex-direction: column; gap: 12px; }
         }
 
         input, select { 
-            background: #f1f5f9; 
-            border: none; 
-            padding: 12px; 
-            border-radius: 12px; 
-            font-size: 14px; 
-            flex: 1; 
-            width: 100%; /* 保证占满父级宽度 */
-            outline: none; 
-            -webkit-appearance: none; /* 移除 iOS 默认样式 */
+            background: #f1f5f9; border: none; padding: 14px; 
+            border-radius: 14px; font-size: 15px; color: var(--text-main); 
+            flex: 1; width: 100%; outline: none; transition: 0.2s;
+            -webkit-appearance: none;
+            text-align: left; /* 强制左对齐 */
         }
         
-        .btn-add { 
-            width: 100%; 
-            background: #1e293b; 
-            color: var(--white); 
-            border: none; 
-            padding: 15px; 
-            border-radius: 12px; 
-            font-weight: 600; 
-            font-size: 16px;
-            cursor: pointer; 
-            transition: 0.2s;
-            margin-top: 5px;
+        /* 针对 iOS 日期选择器的特殊对齐修复 */
+        input[type="date"] {
+            display: flex;
+            align-items: center;
+            min-height: 48px;
         }
-        .btn-add:active { transform: scale(0.97); opacity: 0.9; }
+        input[type="date"]::-webkit-date-and-time-value {
+            text-align: left; /* 强制 iOS 日期文字靠左 */
+            margin-right: auto;
+        }
 
-        /* --- 列表区 --- */
-        .date-header { display: flex; justify-content: space-between; padding: 0 10px; margin: 20px 0 10px; }
+        input:focus { background: #e8effa; box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1); }
+        
+        .btn-add { 
+            width: 100%; background: #1e293b; color: var(--white); 
+            border: none; padding: 16px; border-radius: 14px; 
+            font-weight: 600; font-size: 16px; cursor: pointer; transition: 0.3s;
+            margin-top: 8px;
+        }
+        .btn-add:active { transform: scale(0.96); background: #000; }
+
+        /* --- 列表项 --- */
+        .date-header { display: flex; justify-content: space-between; padding: 0 10px; margin: 25px 0 10px; border-left: 4px solid var(--primary); padding-left: 12px; }
         .date-text { font-size: 14px; font-weight: 700; color: var(--text-main); }
         .day-stat { font-size: 11px; color: var(--text-sub); }
         
-        .card { background: var(--white); padding: 15px; border-radius: 18px; display: flex; align-items: center; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
-        .category-icon { width: 40px; height: 40px; border-radius: 12px; background: #f8fafc; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-right: 12px; flex-shrink: 0; }
-        .card-info { flex: 1; min-width: 0; } /* 防止文字溢出 */
-        .card-info .desc { font-size: 14px; font-weight: 600; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
-        .card-info .time { font-size: 11px; color: var(--text-sub); }
+        .card { background: var(--white); padding: 16px; border-radius: 20px; display: flex; align-items: center; margin-bottom: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
+        .category-icon { width: 44px; height: 44px; border-radius: 14px; background: #f8fafc; display: flex; align-items: center; justify-content: center; font-size: 22px; margin-right: 14px; flex-shrink: 0; }
+        .card-info { flex: 1; min-width: 0; }
+        .card-info .desc { font-size: 15px; font-weight: 600; color: var(--text-main); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .card-info .time { font-size: 12px; color: var(--text-sub); margin-top: 2px; }
         .card-right { text-align: right; margin-left: 10px; flex-shrink: 0; }
-        .amt { font-size: 15px; font-weight: 700; }
+        .amt { font-size: 16px; font-weight: 700; }
         .amt-income { color: var(--success); }
-        .del-btn { font-size: 11px; color: #cbd5e1; cursor: pointer; margin-top: 4px; display: inline-block; padding: 4px 0; }
+        .del-btn { font-size: 11px; color: #cbd5e1; cursor: pointer; margin-top: 6px; display: inline-block; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <!-- 看板区 -->
     <div class="dashboard">
         <div class="stats-row">
             <div class="stat-item"><p id="label-exp">--月支出</p><h3 id="month-expense">¥ 0.00</h3></div>
@@ -135,11 +130,10 @@
         </div>
     </div>
 
-    <!-- 记账表单 -->
     <div class="input-card">
         <div class="row">
             <input type="date" id="date-input">
-            <input type="text" id="desc" placeholder="备注（如：瑞幸咖啡）">
+            <input type="text" id="desc" placeholder="备注（如：午餐）">
         </div>
         <div class="row">
             <input type="number" id="amount" placeholder="0.00" inputmode="decimal">
@@ -156,14 +150,15 @@
         <button class="btn-add" onclick="addRecord()">确认入账</button>
     </div>
 
-    <!-- 账单列表 -->
     <div id="list-container"></div>
 </div>
 
 <script>
     document.getElementById('date-input').valueAsDate = new Date();
-    let records = JSON.parse(localStorage.getItem('ledger_mobile_v1')) || [];
-    const colors = ['#ffffff', '#e0e7ff', '#c7d2fe', '#a5b4fc', '#818cf8'];
+    let records = JSON.parse(localStorage.getItem('ledger_final_v8')) || [];
+    
+    // 深色系莫兰迪配色，更显眼且美观
+    const colors = ['#FFD93D', '#FF6B6B', '#4D96FF', '#6BCB77', '#9D84B7', '#475569'];
 
     function addRecord() {
         const date = document.getElementById('date-input').value;
@@ -184,7 +179,7 @@
     }
 
     function saveAndRender() {
-        localStorage.setItem('ledger_mobile_v1', JSON.stringify(records));
+        localStorage.setItem('ledger_final_v8', JSON.stringify(records));
         render();
     }
 
