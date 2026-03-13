@@ -2,35 +2,46 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>极简本地记账本</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>极简本地记账本 - 手机适配版</title>
     <style>
         :root { 
-            --primary: #6366f1; --secondary: #a855f7; --bg: #f8fafc; 
+            --primary: #6366f1; --secondary: #a855f7; --bg: #f0f2f5; 
             --text-main: #1e293b; --text-sub: #64748b; --white: #ffffff;
             --success: #10b981; --danger: #ef4444;
         }
 
-        body { font-family: "PingFang SC", sans-serif; background: var(--bg); margin: 0; padding: 20px; display: flex; justify-content: center; }
+        * { box-sizing: border-box; } /* 核心：防止任何元素撑出屏幕 */
+
+        body { 
+            font-family: -apple-system, "PingFang SC", sans-serif; 
+            background: var(--bg); 
+            margin: 0; 
+            padding: 15px; 
+            display: flex; 
+            justify-content: center; 
+            overflow-x: hidden; /* 禁止横向滚动 */
+        }
+
         .container { width: 100%; max-width: 440px; }
 
         /* --- Dashboard 看板 --- */
         .dashboard {
             background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            padding: 24px; border-radius: 28px; color: white;
-            box-shadow: 0 12px 24px rgba(99, 102, 241, 0.2);
-            margin-bottom: 25px;
+            padding: 24px; border-radius: 24px; color: white;
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.15);
+            margin-bottom: 20px;
         }
         
         .stats-row { display: flex; justify-content: space-between; margin-bottom: 20px; }
         .stat-item p { font-size: 11px; opacity: 0.8; margin: 0 0 5px 0; }
         .stat-item h3 { font-size: 24px; margin: 0; font-weight: 700; }
 
-        /* 自研：纯 CSS 分类统计条（替代 Chart.js） */
+        /* 纯 CSS 统计条 */
         .chart-pure-css { margin-top: 15px; }
         .progress-stack { 
-            height: 10px; background: rgba(255,255,255,0.15); 
-            border-radius: 5px; display: flex; overflow: hidden; margin-bottom: 8px;
+            height: 8px; background: rgba(255,255,255,0.15); 
+            border-radius: 4px; display: flex; overflow: hidden; margin-bottom: 8px;
         }
         .progress-segment { height: 100%; transition: width 0.5s ease; }
         .chart-labels { display: flex; flex-wrap: wrap; gap: 8px; font-size: 10px; }
@@ -43,36 +54,76 @@
         }
         .balance-value { font-weight: 700; font-size: 18px; }
 
-        /* --- 输入区 --- */
-        .input-card { background: var(--white); padding: 20px; border-radius: 24px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
-        .row { display: flex; gap: 10px; margin-bottom: 12px; }
-        input, select { background: #f1f5f9; border: none; padding: 12px; border-radius: 12px; font-size: 14px; flex: 1; outline: none; }
-        .btn-add { width: 100%; background: var(--text-main); color: var(--white); border: none; padding: 14px; border-radius: 12px; font-weight: 600; cursor: pointer; }
+        /* --- 输入区适配 --- */
+        .input-card { background: var(--white); padding: 20px; border-radius: 20px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+        
+        .row { 
+            display: flex; 
+            gap: 10px; 
+            margin-bottom: 12px; 
+            width: 100%;
+        }
+
+        /* 关键：手机端自适应逻辑 */
+        @media (max-width: 480px) {
+            .row { flex-direction: column; gap: 10px; } /* 手机端强制换行 */
+            .dashboard { padding: 20px; }
+            .stat-item h3 { font-size: 20px; }
+        }
+
+        input, select { 
+            background: #f1f5f9; 
+            border: none; 
+            padding: 12px; 
+            border-radius: 12px; 
+            font-size: 14px; 
+            flex: 1; 
+            width: 100%; /* 保证占满父级宽度 */
+            outline: none; 
+            -webkit-appearance: none; /* 移除 iOS 默认样式 */
+        }
+        
+        .btn-add { 
+            width: 100%; 
+            background: #1e293b; 
+            color: var(--white); 
+            border: none; 
+            padding: 15px; 
+            border-radius: 12px; 
+            font-weight: 600; 
+            font-size: 16px;
+            cursor: pointer; 
+            transition: 0.2s;
+            margin-top: 5px;
+        }
+        .btn-add:active { transform: scale(0.97); opacity: 0.9; }
 
         /* --- 列表区 --- */
-        .date-header { display: flex; justify-content: space-between; padding: 0 10px; margin: 15px 0 10px; }
+        .date-header { display: flex; justify-content: space-between; padding: 0 10px; margin: 20px 0 10px; }
         .date-text { font-size: 14px; font-weight: 700; color: var(--text-main); }
-        .card { background: var(--white); padding: 15px; border-radius: 20px; display: flex; align-items: center; margin-bottom: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
-        .category-icon { width: 42px; height: 42px; border-radius: 14px; background: #f8fafc; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-right: 12px; }
-        .card-info { flex: 1; }
-        .card-info .desc { font-size: 14px; font-weight: 600; color: var(--text-main); }
+        .day-stat { font-size: 11px; color: var(--text-sub); }
+        
+        .card { background: var(--white); padding: 15px; border-radius: 18px; display: flex; align-items: center; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+        .category-icon { width: 40px; height: 40px; border-radius: 12px; background: #f8fafc; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-right: 12px; flex-shrink: 0; }
+        .card-info { flex: 1; min-width: 0; } /* 防止文字溢出 */
+        .card-info .desc { font-size: 14px; font-weight: 600; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
         .card-info .time { font-size: 11px; color: var(--text-sub); }
-        .card-right { text-align: right; }
+        .card-right { text-align: right; margin-left: 10px; flex-shrink: 0; }
         .amt { font-size: 15px; font-weight: 700; }
         .amt-income { color: var(--success); }
-        .del-btn { font-size: 11px; color: #cbd5e1; cursor: pointer; margin-top: 4px; display: inline-block; }
+        .del-btn { font-size: 11px; color: #cbd5e1; cursor: pointer; margin-top: 4px; display: inline-block; padding: 4px 0; }
     </style>
 </head>
 <body>
 
 <div class="container">
+    <!-- 看板区 -->
     <div class="dashboard">
         <div class="stats-row">
             <div class="stat-item"><p id="label-exp">--月支出</p><h3 id="month-expense">¥ 0.00</h3></div>
             <div class="stat-item" style="text-align: right;"><p id="label-inc">--月收入</p><h3 id="month-income">¥ 0.00</h3></div>
         </div>
         
-        <!-- 纯 CSS 统计条 -->
         <div class="chart-pure-css">
             <div class="progress-stack" id="progress-stack"></div>
             <div class="chart-labels" id="chart-labels"></div>
@@ -84,34 +135,39 @@
         </div>
     </div>
 
+    <!-- 记账表单 -->
     <div class="input-card">
         <div class="row">
             <input type="date" id="date-input">
-            <input type="text" id="desc" placeholder="备注">
+            <input type="text" id="desc" placeholder="备注（如：瑞幸咖啡）">
         </div>
         <div class="row">
-            <input type="number" id="amount" placeholder="金额">
+            <input type="number" id="amount" placeholder="0.00" inputmode="decimal">
             <select id="category">
                 <option value="餐饮" data-icon="🍔">🍔 餐饮</option>
                 <option value="交通" data-icon="🚗">🚗 交通</option>
                 <option value="购物" data-icon="🛍️">🛍️ 购物</option>
                 <option value="娱乐" data-icon="🎮">🎮 娱乐</option>
+                <option value="医疗" data-icon="🏥">🏥 医疗</option>
+                <option value="其他" data-icon="📦">📦 其他</option>
                 <option value="收入" data-icon="💰">💰 收入</option>
             </select>
         </div>
         <button class="btn-add" onclick="addRecord()">确认入账</button>
     </div>
+
+    <!-- 账单列表 -->
     <div id="list-container"></div>
 </div>
 
 <script>
     document.getElementById('date-input').valueAsDate = new Date();
-    let records = JSON.parse(localStorage.getItem('ledger_no_lib')) || [];
-    const colors = ['#ffffff', '#cbd5e1', '#94a3b8', '#64748b', '#475569'];
+    let records = JSON.parse(localStorage.getItem('ledger_mobile_v1')) || [];
+    const colors = ['#ffffff', '#e0e7ff', '#c7d2fe', '#a5b4fc', '#818cf8'];
 
     function addRecord() {
         const date = document.getElementById('date-input').value;
-        const desc = document.getElementById('desc').value || '未分类';
+        const desc = document.getElementById('desc').value || '未分类记录';
         const amount = parseFloat(document.getElementById('amount').value);
         const select = document.getElementById('category');
         if (!date || isNaN(amount)) return alert('请输入金额');
@@ -124,11 +180,11 @@
     }
 
     function deleteRecord(id) {
-        if(confirm('删除？')) { records = records.filter(r => r.id !== id); saveAndRender(); }
+        if(confirm('删除这笔账单？')) { records = records.filter(r => r.id !== id); saveAndRender(); }
     }
 
     function saveAndRender() {
-        localStorage.setItem('ledger_no_lib', JSON.stringify(records));
+        localStorage.setItem('ledger_mobile_v1', JSON.stringify(records));
         render();
     }
 
@@ -166,26 +222,19 @@
         updatePureCSSChart(chartData, mExp);
     }
 
-    // 关键：不依赖 Chart.js 的纯原生统计条绘制
     function updatePureCSSChart(data, totalExp) {
         const stack = document.getElementById('progress-stack');
         const labels = document.getElementById('chart-labels');
-        stack.innerHTML = '';
-        labels.innerHTML = '';
-
+        stack.innerHTML = ''; labels.innerHTML = '';
         if (totalExp === 0) {
             stack.innerHTML = '<div class="progress-segment" style="width: 100%; background: rgba(255,255,255,0.1)"></div>';
             labels.innerHTML = '<span>暂无支出统计</span>';
             return;
         }
-
         Object.keys(data).forEach((cat, i) => {
             const percentage = (data[cat] / totalExp) * 100;
             const color = colors[i % colors.length];
-            
-            // 绘制颜色条
             stack.innerHTML += `<div class="progress-segment" style="width: ${percentage}%; background: ${color}"></div>`;
-            // 绘制图例
             labels.innerHTML += `<span><i class="label-dot" style="background: ${color}"></i>${cat} ${Math.round(percentage)}%</span>`;
         });
     }
