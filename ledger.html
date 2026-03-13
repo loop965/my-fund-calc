@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>日历记账本 - 最终修复版</title>
+    <style>
+        :root { 
+            --primary: #6366f1; --secondary: #a855f7; --bg: #f4f7fa; 
+            --text-main: #1e293b; --text-sub: #64748b; --white: #ffffff;
+            --success: #10b981; --danger: #ef4444;
+        }
+
+        /* 基础重置：防止内边距撑开宽度 */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body { 
+            font-family: -apple-system, "PingFang SC", sans-serif; 
+            background: var(--bg); 
+            margin: 0; 
+            padding: 15px; 
+            display: flex; 
+            flex-direction: column;
+            align-items: center; 
+            overflow-x: hidden;
+            width: 100%;
+        }
+
+        .container { 
+            width: 100%; 
+            max-width: 440px; 
+            position: relative;
+        }
+
+        /* --- Dashboard 看板 --- */
+        .dashboard {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            padding: 22px; border-radius: 26px; color: white;
+            box-shadow: 0 12px 30px rgba(99, 102, 241, 0.25); margin-bottom: 18px;
+        }
+        .stats-row { display: flex; justify-content: space-between; margin-bottom: 15px; gap: 10px; }
+        .stat-item { flex: 1; min-width: 0; }
+        .stat-item h3 { 
+            font-size: clamp(18px, 5vw, 24px); 
+            margin: 4px 0 0; 
+            font-weight: 800; 
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .stat-item p { font-size: 11px; opacity: 0.85; margin: 0; }
+
+        .yearly-chart-container { margin-top: 18px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.15); }
+        .chart-bars { display: flex; align-items: flex-end; justify-content: space-between; height: 80px; gap: 4px; }
+        .bar-item { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; }
+        .bar { 
+            width: 100%; min-height: 4px; border-radius: 50px; 
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            -webkit-box-reflect: below 2px linear-gradient(transparent, rgba(255,255,255,0.1));
+        }
+        .bar.active { background: #fff !important; box-shadow: 0 0 12px #fff; transform: scaleX(1.2); }
+        .bar-label { font-size: 10px; margin-top: 10px; opacity: 0.7; font-weight: 600; }
+
+        .year-summary { margin-top: 15px; padding-top: 10px; border-top: 1px dashed rgba(255,255,255,0.2); display: flex; justify-content: center; align-items: center; font-size: 12px; opacity: 0.9; }
+
+        /* --- 工具栏 --- */
+        .calendar-tools { display: flex; gap: 8px; margin-bottom: 15px; width: 100%; }
+        .tool-btn { flex: 1; background: #fff; border: 1px solid #e2e8f0; padding: 12px 5px; border-radius: 16px; font-size: 11px; color: var(--text-main); font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+
+        /* --- 日历主体 --- */
+        .calendar-card { background: var(--white); border-radius: 24px; padding: 18px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); margin-bottom: 15px; }
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .calendar-title { font-weight: 800; font-size: 18px; color: var(--text-main); cursor: pointer;}
+        .nav-btn { font-size: 20px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-sub); border-radius: 10px; }
+        
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
+        .weekday { font-size: 11px; color: var(--text-sub); font-weight: 700; padding-bottom: 10px; }
+        .day { aspect-ratio: 0.85; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; font-size: 15px; border-radius: 14px; cursor: pointer; transition: 0.2s; padding-top: 8px; }
+        .day-exp-sum { font-size: 9px; color: var(--danger); font-weight: 700; margin-top: 2px; transform: scale(0.85); }
+        .day.selected { background: var(--primary) !important; color: white !important; box-shadow: 0 5px 15px rgba(99, 102, 241, 0.35); }
+        .day.today { color: var(--primary); font-weight: 900; background: #f0f2ff; }
+        .day.other-month { opacity: 0.05; pointer-events: none; }
+
+        /* --- 明细列表 --- */
+        .detail-section { width: 100%; margin-top: 10px; padding-bottom: 100px; }
+        .detail-title { font-size: 15px; font-weight: 800; color: var(--text-main); margin-bottom: 12px; padding: 0 8px; display: flex; justify-content: space-between; align-items: center;}
+        .card { background: var(--white); padding: 16px; border-radius: 20px; display: flex; align-items: center; margin-bottom: 12px; box-shadow: 0 3px 10px rgba(0,0,0,0.02); }
+        .category-icon { width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 22px; margin-right: 14px; }
+        .card-info { flex: 1; min-width: 0; }
+        .card-info .desc { font-size: 15px; font-weight: 700; color: var(--text-main); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .amt { font-size: 17px; font-weight: 800; text-align: right; }
+        .amt-income { color: var(--success); }
+        .amt-expense { color: var(--danger); }
+
+        /* --- 核心修复：弹窗防溢出与对齐 --- */
+        .fab { position: fixed; bottom: 30px; right: 20px; width: 64px; height: 64px; background: #1e293b; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 99; }
+        
+        .modal { 
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.5); 
+            display: none; 
+            align-items: flex-end; justify-content: center; 
+            z-index: 1000; 
+            backdrop-filter: blur(5px);
+            overflow: hidden;
+        }
+        .modal-content { 
+            background: white; 
+            width: 100%; 
+            max-width: 440px; 
+            border-radius: 32px 32px 0 0; 
+            padding: 30px 20px 50px; 
+            animation: slideUp 0.4s cubic-bezier(0.2, 1, 0.3, 1); 
+            box-sizing: border-box; /* 关键：padding包含在内 */
+            display: flex;
+            flex-direction: column;
+        }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        
+        .row { display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px; width: 100%; }
+
+        /* 修复核心：统一所有输入控件样式，禁止任何形式的宽度溢出 */
+        input[type="date"], 
+        input, 
+        input[type="number"], 
+        select { 
+            width: 100% !important; 
+            max-width: 100%;
+            height: 54px;
+            box-sizing: border-box; 
+            background: #f8fafc; 
+            border: 1.5px solid #f1f5f9; 
+            padding: 0 15px; 
+            border-radius: 18px; 
+            font-size: 16px; 
+            outline: none; 
+            display: block;
+            margin: 0;
+            -webkit-appearance: none; /* 移除 iOS 默认外观 */
+            appearance: none;
+            font-family: inherit;
+        }
+        
+        /* 针对日期控件的特殊清除 */
+        input[type="date"]::-webkit-inner-spin-button,
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            padding: 0;
+            margin-right: 5px;
+        }
+
+        .btn-save { width: 100%; background: #1e293b; color: white; border: none; padding: 18px; border-radius: 20px; font-weight: 800; font-size: 18px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- 看板 -->
+    <div class="dashboard">
+        <div class="stats-row">
+            <div class="stat-item"><p id="m-label-exp">支出</p><h3 id="month-expense">¥ 0.00</h3></div>
+            <div class="stat-item" style="text-align: right;"><p id="m-label-inc">收入</p><h3 id="month-income">¥ 0.00</h3></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px; opacity: 0.95; font-weight: 600;">
+            <span>月度净结余</span>
+            <b id="month-balance">¥ 0.00</b>
+        </div>
+        
+        <div class="yearly-chart-container">
+            <div class="chart-bars" id="yearly-bars"></div>
+            <div class="year-summary">
+                <span id="year-label-text">2026</span>年度总结余：
+                <b id="year-balance" style="font-size: 14px; margin-left: 5px;">¥ 0.00</b>
+            </div>
+        </div>
+    </div>
+
+    <!-- 工具栏 -->
+    <div class="calendar-tools">
+        <div class="tool-btn" onclick="exportToCSV()">📤 导出备份</div>
+        <div class="tool-btn" onclick="document.getElementById('importFile').click()">📥 导入数据</div>
+        <div class="tool-btn" style="color:var(--danger); border-color:#fee2e2" onclick="resetData()">🗑️ 清空</div>
+        <input type="file" id="importFile" accept=".csv" style="display:none" onchange="importFromCSV(this)">
+    </div>
+
+    <!-- 日历 -->
+    <div class="calendar-card">
+        <div class="calendar-header">
+            <div style="display: flex; gap: 4px;"><div class="nav-btn" onclick="changeYear(-1)">«</div><div class="nav-btn" onclick="changeMonth(-1)">‹</div></div>
+            <div class="calendar-title" id="calendar-month-year" onclick="jumpToCurrent()">2026年03月</div>
+            <div style="display: flex; gap: 4px;"><div class="nav-btn" onclick="changeMonth(1)">›</div><div class="nav-btn" onclick="changeYear(1)">»</div></div>
+        </div>
+        <div class="calendar-grid" id="calendar-grid"></div>
+    </div>
+
+    <div class="detail-section">
+        <div class="detail-title"><span id="selected-date-label">今日详情</span><span id="day-total" style="font-size: 12px; color: var(--text-sub); font-weight: 600;"></span></div>
+        <div id="day-detail-list"></div>
+    </div>
+</div>
+
+<div class="fab" onclick="toggleModal(true)">+</div>
+
+<!-- 弹窗：独立于 container 之外 -->
+<div class="modal" id="add-modal" onclick="if(event.target==this) toggleModal(false)">
+    <div class="modal-content">
+        <h3 style="margin: 0 0 25px 0; text-align: center; font-weight: 800; font-size: 22px;">新记一笔</h3>
+        <div class="row">
+            <input type="date" id="date-input">
+            <input type="text" id="desc" placeholder="备注（可选）">
+            <input type="number" id="amount" placeholder="0.00" inputmode="decimal">
+            <select id="category">
+                <option value="餐饮" data-icon="🍔">🍔 餐饮美食</option>
+                <option value="交通" data-icon="🚗">🚗 交通出行</option>
+                <option value="购物" data-icon="🛍️">🛍️ 日常购物</option>
+                <option value="娱乐" data-icon="🎮">🎮 休闲娱乐</option>
+                <option value="医疗" data-icon="🏥">🏥 医疗健康</option>
+                <option value="收入" data-icon="💰">💰 收入入账</option>
+            </select>
+        </div>
+        <button class="btn-save" onclick="addRecord()">确认保存记录</button>
+    </div>
+</div>
+
+<script>
+    let records = JSON.parse(localStorage.getItem('cal_sum_ledger_v3')) || [];
+    let calendarDate = new Date();
+    let selectedDateStr = new Date().toISOString().split('T')[0];
+
+    const barGradients = ['#FFADAD', '#FFD6A5', '#FDFFB6', '#CAFFBF', '#9BFBC0', '#A0C4FF', '#BDB2FF', '#FFC6FF', '#FF9AA2', '#8FCACA', '#CCE2CB', '#FFB319'];
+    const cateStyles = {
+        '餐饮': { bg: '#FFF1F1', icon: '🍔' }, '交通': { bg: '#F1F7FF', icon: '🚗' }, '购物': { bg: '#FDF1FF', icon: '🛍️' },
+        '娱乐': { bg: '#F1FFF5', icon: '🎮' }, '医疗': { bg: '#FFF9F1', icon: '🏥' }, '收入': { bg: '#F0FFF4', icon: '💰' }, '默认': { bg: '#F8FAFC', icon: '📝' }
+    };
+
+    window.onload = () => { document.getElementById('date-input').value = selectedDateStr; refreshAll(); };
+
+    function refreshAll() { renderCalendar(); renderDayDetail(); renderDashboard(); }
+
+    function renderDashboard() {
+        const year = calendarDate.getFullYear(), month = calendarDate.getMonth() + 1;
+        const curM = `${year}-${String(month).padStart(2, '0')}`;
+        let mExp = 0, mInc = 0, yExp = 0, yInc = 0;
+        let yData = new Array(12).fill(0);
+
+        records.forEach(r => {
+            const rDate = new Date(r.date);
+            if(r.date.startsWith(curM)) {
+                if(r.category === '收入') mInc += r.amount; else mExp += r.amount;
+            }
+            if(rDate.getFullYear() === year) {
+                if(r.category === '收入') yInc += r.amount;
+                else { yExp += r.amount; yData[rDate.getMonth()] += r.amount; }
+            }
+        });
+
+        document.getElementById('month-expense').innerText = `¥ ${mExp.toLocaleString(undefined, {minimumFractionDigits:2})}`;
+        document.getElementById('month-income').innerText = `¥ ${mInc.toLocaleString(undefined, {minimumFractionDigits:2})}`;
+        document.getElementById('month-balance').innerText = `¥ ${(mInc - mExp).toFixed(2)}`;
+        document.getElementById('m-label-exp').innerText = month + '月支出';
+        document.getElementById('m-label-inc').innerText = month + '月收入';
+        document.getElementById('year-label-text').innerText = year;
+        document.getElementById('year-balance').innerText = `¥ ${(yInc - yExp).toLocaleString(undefined, {minimumFractionDigits:2})}`;
+
+        const barContainer = document.getElementById('yearly-bars');
+        const maxVal = Math.max(...yData, 1);
+        barContainer.innerHTML = yData.map((val, i) => {
+            const height = val > 0 ? Math.max((val / maxVal) * 100, 15) : 6;
+            const isActive = i === (month - 1);
+            return `<div class="bar-item"><div class="bar ${isActive ? 'active' : ''}" style="height: ${height}%; background: ${isActive ? '#fff' : barGradients[i]}; opacity: ${isActive ? 1 : 0.7}"></div><span class="bar-label" style="color:${isActive?'#fff':'rgba(255,255,255,0.6)'}">${i+1}</span></div>`;
+        }).join('');
+    }
+
+    function renderCalendar() {
+        const grid = document.getElementById('calendar-grid');
+        grid.innerHTML = '';
+        const year = calendarDate.getFullYear(), month = calendarDate.getMonth();
+        document.getElementById('calendar-month-year').innerText = `${year}年${String(month + 1).padStart(2,'0')}月`;
+        ['日','一','二','三','四','五','六'].forEach(w => grid.innerHTML += `<div class="weekday">${w}</div>`);
+        const firstDay = new Date(year, month, 1).getDay(), lastDate = new Date(year, month + 1, 0).getDate();
+        const todayStr = new Date().toISOString().split('T')[0];
+        for(let i=0; i<firstDay; i++) grid.innerHTML += `<div class="day other-month"></div>`;
+        for(let d=1; d<=lastDate; d++) {
+            const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+            const dayExp = records.filter(r => r.date === dateStr && r.category !== '收入').reduce((s, r) => s + r.amount, 0);
+            grid.innerHTML += `<div class="day ${dateStr === selectedDateStr?'selected':''} ${dateStr === todayStr?'today':''}" onclick="selectDate('${dateStr}')"><span>${d}</span><span class="day-exp-sum">${dayExp > 0 ? '¥'+dayExp.toFixed(0) : ''}</span></div>`;
+        }
+    }
+
+    function renderDayDetail() {
+        const list = document.getElementById('day-detail-list');
+        const dayRecords = records.filter(r => r.date === selectedDateStr);
+        list.innerHTML = ''; let dExp = 0;
+        dayRecords.sort((a,b) => b.id - a.id).forEach(r => {
+            const isInc = r.category === '收入'; if(!isInc) dExp += r.amount;
+            const style = cateStyles[r.category] || cateStyles['默认'];
+            list.innerHTML += `<div class="card"><div class="category-icon" style="background: ${style.bg}">${r.icon}</div><div class="card-info"><span class="desc">${r.desc}</span><span class="time">${r.time} · ${r.category}</span></div><div style="text-align:right"><div class="amt ${isInc?'amt-income':'amt-expense'}">${isInc?'+':'-'}${r.amount.toFixed(2)}</div><div style="font-size:10px; color:var(--danger); margin-top:6px; opacity:0.6" onclick="deleteRecord(${r.id})">删除</div></div></div>`;
+        });
+        document.getElementById('day-total').innerText = dExp > 0 ? `共支出 ¥${dExp.toFixed(2)}` : '';
+        document.getElementById('selected-date-label').innerText = selectedDateStr === new Date().toISOString().split('T')[0] ? '今日详情' : `${selectedDateStr} 账单`;
+    }
+
+    function selectDate(date) { selectedDateStr = date; document.getElementById('date-input').value = date; refreshAll(); }
+    function changeMonth(step) { calendarDate.setMonth(calendarDate.getMonth() + step); refreshAll(); }
+    function changeYear(step) { calendarDate.setFullYear(calendarDate.getFullYear() + step); refreshAll(); }
+    function jumpToCurrent() { calendarDate = new Date(); selectedDateStr = calendarDate.toISOString().split('T')[0]; refreshAll(); }
+    function addRecord() {
+        const amount = parseFloat(document.getElementById('amount').value);
+        if (isNaN(amount) || amount <= 0) return alert('请输入正确金额');
+        records.push({ id: Date.now(), date: document.getElementById('date-input').value, amount: amount, desc: document.getElementById('desc').value || '日常支出', category: document.getElementById('category').value, icon: cateStyles[document.getElementById('category').value].icon, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12:false}) });
+        saveAndRefresh(); toggleModal(false); document.getElementById('amount').value = ''; document.getElementById('desc').value = '';
+    }
+    function deleteRecord(id) { if(confirm('确定删除吗？')) { records = records.filter(r => r.id !== id); saveAndRefresh(); } }
+    function saveAndRefresh() { localStorage.setItem('cal_sum_ledger_v3', JSON.stringify(records)); refreshAll(); }
+    function toggleModal(show) { document.getElementById('add-modal').style.display = show ? 'flex' : 'none'; }
+    function resetData() { if(confirm('⚠️ 确定清空所有数据？')) { records = []; saveAndRefresh(); } }
+    function exportToCSV() { 
+        let csv = "\uFEFF日期,分类,备注,金额,时间\n"; 
+        records.forEach(r => csv += `${r.date},${r.category},${r.desc},${r.amount},${r.time}\n`); 
+        const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'})); link.download = `账单备份.csv`; link.click(); 
+    }
+    function importFromCSV(input) { 
+        const reader = new FileReader(); 
+        reader.onload = function(e) { 
+            try { 
+                const lines = e.target.result.split('\n').slice(1); 
+                const imported = lines.filter(l => l.trim()).map(l => { 
+                    const c = l.split(','); return { id: Date.now()+Math.random(), date: c[0].trim(), category: c[1].trim(), desc: c[2].trim(), amount: parseFloat(c[3]), time: c[4].trim(), icon: cateStyles[c[1].trim()]?.icon || '📝' }; 
+                }); 
+                if(confirm(`成功识别 ${imported.length} 条记录，确定导入？`)) { records = imported; saveAndRefresh(); } 
+            } catch(err) { alert("导入失败"); } 
+        }; 
+        reader.readAsText(input.files[0]); 
+    }
+</script>
+</body>
+</html>
