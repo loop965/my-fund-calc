@@ -22,7 +22,7 @@
 
         .container { width: 100%; max-width: 440px; position: relative; }
 
-        /* --- 高级翻转看板 --- */
+        /* --- 看板 --- */
         .dashboard-wrapper {
             position: relative; width: 100%; height: 220px; 
             perspective: 1000px; margin-bottom: 20px;
@@ -42,12 +42,10 @@
         }
         .db-back { transform: rotateY(180deg); justify-content: center; }
 
-        /* 看板数据 */
         .stats-row { display: flex; justify-content: space-between; margin-bottom: 10px; }
         .stat-item h3 { font-size: 24px; margin: 4px 0; font-weight: 800; }
         .stat-item p { font-size: 11px; opacity: 0.8; margin: 0; }
         
-        /* 进度条 */
         .segmented-progress {
             display: flex; height: 12px; width: 100%; 
             background: rgba(255, 255, 255, 0.1); 
@@ -59,8 +57,6 @@
         .legend-item { display: flex; align-items: center; font-size: 10px; gap: 4px; opacity: 0.85; }
         .legend-dot { width: 6px; height: 6px; border-radius: 50%; }
 
-        /* 年度统计 */
-        .yearly-title { font-size: 11px; opacity: 0.7; text-align: center; margin-bottom: 12px; }
         .chart-bars { display: flex; align-items: flex-end; justify-content: space-between; height: 60px; gap: 4px; }
         .bar { width: 100%; min-height: 4px; border-radius: 3px; transition: 0.3s; }
         .bar.selected { border: 2px solid white; transform: scaleY(1.1); box-shadow: 0 0 10px white; }
@@ -100,13 +96,12 @@
             transition: all 0.3s ease;
         }
         .card.removing { opacity: 0; transform: translateX(20px); margin-bottom: -60px; }
-
         .category-icon { width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 22px; margin-right: 14px; background: #f8fafc; }
         .amt { font-size: 17px; font-weight: 800; text-align: right; }
         .amt-income { color: var(--success); }
         .amt-expense { color: var(--danger); }
 
-        /* --- 弹窗与日期对齐修复 --- */
+        /* --- 弹窗与布局优化 --- */
         .fab { position: fixed; bottom: 30px; right: 20px; width: 64px; height: 64px; background: #1e293b; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 99; cursor: pointer; }
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; align-items: flex-end; justify-content: center; z-index: 1000; backdrop-filter: blur(8px); }
         .modal-content { background: white; width: 100%; max-width: 440px; border-radius: 32px 32px 0 0; padding: 30px 20px 40px; }
@@ -114,19 +109,19 @@
         input, select { 
             width: 100%; height: 54px; margin-bottom: 15px; border-radius: 18px; 
             border: 1.5px solid #f1f5f9; padding: 0 15px; font-size: 16px; background: #f8fafc;
+            color: var(--text-main);
         }
         
-        /* 日期选择器强制左对齐 */
+        /* 强制日期左对齐 */
         input[type="date"] {
-            -webkit-appearance: none;
             display: flex !important;
             align-items: center !important;
-            justify-content: flex-start !important;
             text-align: left !important;
+            -webkit-appearance: none;
         }
         input[type="date"]::-webkit-date-and-time-value {
             text-align: left !important;
-            width: 100%;
+            width: 100% !important;
         }
 
         .btn-save { width: 100%; background: #1e293b; color: white; padding: 18px; border-radius: 20px; font-weight: 800; border: none; font-size: 18px; cursor: pointer; }
@@ -154,7 +149,6 @@
         </div>
     </div>
 
-    <!-- 工具栏 -->
     <div class="calendar-tools">
         <div class="tool-btn" onclick="resetData()">🗑️ 清空</div>
         <div class="tool-btn" onclick="document.getElementById('importFile').click()">📥 导入</div>
@@ -179,11 +173,10 @@
 
 <div class="modal" id="add-modal" onclick="if(event.target==this) toggleModal(false)">
     <div class="modal-content">
-        <h3 style="text-align: center; margin-top:0">新记一笔</h3>
+        <h3 style="text-align: center; margin-top:0; margin-bottom: 20px;">新记一笔</h3>
         <input type="date" id="date-input">
-        <input type="text" id="desc" placeholder="备注（可选）">
-        <input type="number" id="amount" placeholder="0.00" inputmode="decimal">
-        <select id="category">
+        <!-- 分类切换时触发记忆备注 -->
+        <select id="category" onchange="applyMemory(this.value)">
             <option value="餐饮">🍔 餐饮美食</option>
             <option value="交通">🚗 交通出行</option>
             <option value="购物">🛍️ 日常购物</option>
@@ -192,13 +185,17 @@
             <option value="住房">🏠 住房物业</option>
             <option value="收入">💰 收入入账</option>
         </select>
+        <input type="number" id="amount" placeholder="输入金额 0.00" inputmode="decimal">
+        <input type="text" id="desc" placeholder="备注信息（可选）">
         <button class="btn-save" onclick="addRecord()">确认保存</button>
     </div>
 </div>
 
 <script>
     const STORAGE_KEY = 'cal_ledger_v6';
+    const MEMORY_KEY = 'ledger_desc_memory';
     let records = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    let descMemory = JSON.parse(localStorage.getItem(MEMORY_KEY)) || {};
     let calendarDate = new Date();
     
     const getISODate = (d) => {
@@ -247,7 +244,7 @@
         if(totalMExp === 0) {
             progContainer.innerHTML = '<p style="text-align:center; opacity:0.6; padding-top:20px; font-size:12px">本月暂无支出记录</p>';
         } else {
-            const sortedCates = Object.entries(cateStats).sort((a,b)=>b[1]-a[1]);
+            const sortedCates = Object.entries(cateStats).sort((a,b)=>b-a);
             let barHtml = '<div class="segmented-progress">';
             let legendHtml = '<div class="progress-legend">';
             sortedCates.forEach(([cat, val], idx) => {
@@ -324,23 +321,46 @@
         }
     }
 
-    function addRecord() {
-        const amtInput = document.getElementById('amount');
-        const amt = parseFloat(amtInput.value);
-        if(!amt) return alert('请输入金额');
-        records.push({ 
-            id:Date.now(), date:document.getElementById('date-input').value, amount:amt, 
-            category:document.getElementById('category').value, desc:document.getElementById('desc').value, 
-            time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',hour12:false}) 
-        });
-        saveData(); amtInput.value=''; document.getElementById('desc').value=''; toggleModal(false); refreshAll();
+    // 备注记忆功能
+    function applyMemory(category) {
+        const descInput = document.getElementById('desc');
+        if (descMemory[category]) {
+            descInput.value = descMemory[category];
+        } else {
+            descInput.value = '';
+        }
     }
 
-    // 增强版导出：支持按月或全部
+    function addRecord() {
+        const amtInput = document.getElementById('amount');
+        const descInput = document.getElementById('desc');
+        const cateInput = document.getElementById('category');
+        const amt = parseFloat(amtInput.value);
+        if(!amt) return alert('请输入金额');
+        
+        const newRecord = { 
+            id:Date.now(), 
+            date:document.getElementById('date-input').value, 
+            amount:amt, 
+            category:cateInput.value, 
+            desc:descInput.value, 
+            time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',hour12:false}) 
+        };
+        
+        // 保存备注记忆
+        if (descInput.value.trim() !== "") {
+            descMemory[cateInput.value] = descInput.value;
+            localStorage.setItem(MEMORY_KEY, JSON.stringify(descMemory));
+        }
+
+        records.push(newRecord);
+        saveData(); 
+        amtInput.value=''; descInput.value=''; toggleModal(false); refreshAll();
+    }
+
     function exportToCSV(onlyCurrentMonth = false) { 
         let filtered = records;
         let filename = "全部账单备份.csv";
-
         if(onlyCurrentMonth) {
             const y = calendarDate.getFullYear(), m = calendarDate.getMonth();
             filtered = records.filter(r => {
@@ -349,9 +369,7 @@
             });
             filename = `${y}-${String(m+1).padStart(2,'0')}_账单.csv`;
         }
-
         if(filtered.length === 0) return alert('没有可导出的数据');
-
         let csv = "\uFEFF日期,时间,分类,金额,描述\n"; 
         filtered.sort((a,b) => a.date.localeCompare(b.date)).forEach(r => {
             csv += `${r.date},${r.time||'00:00'},${r.category},${r.amount},${r.desc||''}\n`;
@@ -363,10 +381,13 @@
     }
 
     function toggleModal(s) { 
-        if(s) document.getElementById('date-input').value = selectedDateStr;
+        if(s) {
+            document.getElementById('date-input').value = selectedDateStr;
+            applyMemory(document.getElementById('category').value);
+        }
         document.getElementById('add-modal').style.display = s ? 'flex' : 'none'; 
     }
-    function resetData() { if(confirm('确定清空所有数据？')) { records=[]; saveData(); refreshAll(); } }
+    function resetData() { if(confirm('确定清空所有数据？')) { records=[]; descMemory={}; localStorage.removeItem(MEMORY_KEY); saveData(); refreshAll(); } }
     function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(records)); }
     function changeMonth(s) { calendarDate.setMonth(calendarDate.getMonth()+s); refreshAll(); }
     function changeYear(s) { calendarDate.setFullYear(calendarDate.getFullYear()+s); refreshAll(); }
@@ -378,11 +399,11 @@
             const rows = e.target.result.split('\n').slice(1).filter(r=>r.trim());
             records = rows.map((r,i) => {
                 const c = r.split(',');
-                return { id:Date.now()+i, date:c[0]?.trim(), time:c[1]?.trim()||"00:00", category:c[2]?.trim(), amount:parseFloat(c[3])||0, desc:c[4]?.trim()||"" };
+                return { id:Date.now()+i, date:c?.trim(), time:c?.trim()||"00:00", category:c?.trim(), amount:parseFloat(c)||0, desc:c?.trim()||"" };
             });
             saveData(); refreshAll();
         };
-        reader.readAsText(input.files[0]);
+        reader.readAsText(input.files);
     }
 </script>
 </body>
