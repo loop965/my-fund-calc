@@ -11,7 +11,7 @@
             --success: #10b981; --danger: #ef4444;
         }
 
-        /* 基础重置：防止内边距撑开宽度 */
+        /* 基础重置 */
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         body { 
@@ -26,11 +26,7 @@
             width: 100%;
         }
 
-        .container { 
-            width: 100%; 
-            max-width: 440px; 
-            position: relative;
-        }
+        .container { width: 100%; max-width: 440px; position: relative; }
 
         /* --- Dashboard 看板 --- */
         .dashboard {
@@ -40,27 +36,15 @@
         }
         .stats-row { display: flex; justify-content: space-between; margin-bottom: 15px; gap: 10px; }
         .stat-item { flex: 1; min-width: 0; }
-        .stat-item h3 { 
-            font-size: clamp(18px, 5vw, 24px); 
-            margin: 4px 0 0; 
-            font-weight: 800; 
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
+        .stat-item h3 { font-size: clamp(18px, 5vw, 24px); margin: 4px 0 0; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .stat-item p { font-size: 11px; opacity: 0.85; margin: 0; }
 
         .yearly-chart-container { margin-top: 18px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.15); }
         .chart-bars { display: flex; align-items: flex-end; justify-content: space-between; height: 80px; gap: 4px; }
         .bar-item { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; }
-        .bar { 
-            width: 100%; min-height: 4px; border-radius: 50px; 
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            -webkit-box-reflect: below 2px linear-gradient(transparent, rgba(255,255,255,0.1));
-        }
+        .bar { width: 100%; min-height: 4px; border-radius: 50px; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); -webkit-box-reflect: below 2px linear-gradient(transparent, rgba(255,255,255,0.1)); }
         .bar.active { background: #fff !important; box-shadow: 0 0 12px #fff; transform: scaleX(1.2); }
         .bar-label { font-size: 10px; margin-top: 10px; opacity: 0.7; font-weight: 600; }
-
         .year-summary { margin-top: 15px; padding-top: 10px; border-top: 1px dashed rgba(255,255,255,0.2); display: flex; justify-content: center; align-items: center; font-size: 12px; opacity: 0.9; }
 
         /* --- 工具栏 --- */
@@ -72,7 +56,6 @@
         .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .calendar-title { font-weight: 800; font-size: 18px; color: var(--text-main); cursor: pointer;}
         .nav-btn { font-size: 20px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-sub); border-radius: 10px; }
-        
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
         .weekday { font-size: 11px; color: var(--text-sub); font-weight: 700; padding-bottom: 10px; }
         .day { aspect-ratio: 0.85; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; font-size: 15px; border-radius: 14px; cursor: pointer; transition: 0.2s; padding-top: 8px; }
@@ -92,7 +75,7 @@
         .amt-income { color: var(--success); }
         .amt-expense { color: var(--danger); }
 
-        /* --- 核心修复：弹窗防溢出与对齐 --- */
+        /* --- 核心修复：弹窗防溢出与iOS日期对齐 --- */
         .fab { position: fixed; bottom: 30px; right: 20px; width: 64px; height: 64px; background: #1e293b; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 99; }
         
         .modal { 
@@ -107,20 +90,18 @@
         }
         .modal-content { 
             background: white; 
-            width: 100%; 
-            max-width: 440px; 
+            width: 100%; max-width: 440px; 
             border-radius: 32px 32px 0 0; 
-            padding: 30px 20px 50px; 
+            padding: 30px 20px 40px; 
             animation: slideUp 0.4s cubic-bezier(0.2, 1, 0.3, 1); 
-            box-sizing: border-box; /* 关键：padding包含在内 */
-            display: flex;
-            flex-direction: column;
+            box-sizing: border-box;
+            display: flex; flex-direction: column;
         }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         
-        .row { display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px; width: 100%; }
+        .row { display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px; width: 100%; }
 
-        /* 修复核心：统一所有输入控件样式，禁止任何形式的宽度溢出 */
+        /* 统一输入框样式，强制左对齐，强制深色文字 */
         input[type="date"], 
         input, 
         input[type="number"], 
@@ -137,19 +118,23 @@
             outline: none; 
             display: block;
             margin: 0;
-            -webkit-appearance: none; /* 移除 iOS 默认外观 */
+            text-align: left !important; /* 强制左对齐 */
+            color: var(--text-main) !important; /* 强制深色文字 */
+            -webkit-appearance: none;
             appearance: none;
             font-family: inherit;
         }
-        
-        /* 针对日期控件的特殊清除 */
-        input[type="date"]::-webkit-inner-spin-button,
-        input[type="date"]::-webkit-calendar-picker-indicator {
-            padding: 0;
-            margin-right: 5px;
+
+        /* 关键：修复 iOS 浏览器日期显示为蓝色且居中的问题 */
+        input[type="date"]::-webkit-date-and-time-value {
+            text-align: left !important;
+            color: var(--text-main) !important;
+            height: 100%;
+            display: flex;
+            align-items: center;
         }
 
-        .btn-save { width: 100%; background: #1e293b; color: white; border: none; padding: 18px; border-radius: 20px; font-weight: 800; font-size: 18px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); cursor: pointer; }
+        .btn-save { width: 100%; background: #1e293b; color: white; border: none; padding: 18px; border-radius: 20px; font-weight: 800; font-size: 18px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -165,7 +150,6 @@
             <span>月度净结余</span>
             <b id="month-balance">¥ 0.00</b>
         </div>
-        
         <div class="yearly-chart-container">
             <div class="chart-bars" id="yearly-bars"></div>
             <div class="year-summary">
@@ -201,7 +185,6 @@
 
 <div class="fab" onclick="toggleModal(true)">+</div>
 
-<!-- 弹窗：独立于 container 之外 -->
 <div class="modal" id="add-modal" onclick="if(event.target==this) toggleModal(false)">
     <div class="modal-content">
         <h3 style="margin: 0 0 25px 0; text-align: center; font-weight: 800; font-size: 22px;">新记一笔</h3>
@@ -303,7 +286,7 @@
     function selectDate(date) { selectedDateStr = date; document.getElementById('date-input').value = date; refreshAll(); }
     function changeMonth(step) { calendarDate.setMonth(calendarDate.getMonth() + step); refreshAll(); }
     function changeYear(step) { calendarDate.setFullYear(calendarDate.getFullYear() + step); refreshAll(); }
-    function jumpToCurrent() { calendarDate = new Date(); selectedDateStr = calendarDate.toISOString().split('T')[0]; refreshAll(); }
+    function jumpToCurrent() { calendarDate = new Date(); selectedDateStr = new Date().toISOString().split('T')[0]; refreshAll(); }
     function addRecord() {
         const amount = parseFloat(document.getElementById('amount').value);
         if (isNaN(amount) || amount <= 0) return alert('请输入正确金额');
@@ -314,6 +297,7 @@
     function saveAndRefresh() { localStorage.setItem('cal_sum_ledger_v3', JSON.stringify(records)); refreshAll(); }
     function toggleModal(show) { document.getElementById('add-modal').style.display = show ? 'flex' : 'none'; }
     function resetData() { if(confirm('⚠️ 确定清空所有数据？')) { records = []; saveAndRefresh(); } }
+    
     function exportToCSV() { 
         let csv = "\uFEFF日期,分类,备注,金额,时间\n"; 
         records.forEach(r => csv += `${r.date},${r.category},${r.desc},${r.amount},${r.time}\n`); 
@@ -328,7 +312,7 @@
                     const c = l.split(','); return { id: Date.now()+Math.random(), date: c[0].trim(), category: c[1].trim(), desc: c[2].trim(), amount: parseFloat(c[3]), time: c[4].trim(), icon: cateStyles[c[1].trim()]?.icon || '📝' }; 
                 }); 
                 if(confirm(`成功识别 ${imported.length} 条记录，确定导入？`)) { records = imported; saveAndRefresh(); } 
-            } catch(err) { alert("导入失败"); } 
+            } catch(err) { alert("导入格式有误"); } 
         }; 
         reader.readAsText(input.files[0]); 
     }
