@@ -63,11 +63,7 @@
         .legend-item { display: flex; align-items: center; font-size: 10px; gap: 4px; opacity: 0.85; }
         .legend-dot { width: 6px; height: 6px; border-radius: 50%; }
 
-        /* 背面标题间距优化 */
-        .yearly-title { 
-            font-size: 10px; opacity: 0.7; text-align: center; 
-            margin-bottom: 22px; letter-spacing: 1px;
-        }
+        .yearly-title { font-size: 10px; opacity: 0.7; text-align: center; margin-bottom: 22px; letter-spacing: 1px; }
         .chart-bars { display: flex; align-items: flex-end; justify-content: space-between; height: 65px; gap: 4px; }
         .bar { width: 100%; min-height: 4px; border-radius: 3px; transition: 0.3s; }
         .bar.selected { border: 2px solid white; transform: scaleY(1.1); box-shadow: 0 0 10px white; }
@@ -76,13 +72,14 @@
             border-radius: 16px; text-align: center; font-size: 12px;
         }
 
-        /* --- 工具栏 --- */
-        .calendar-tools { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 15px; width: 100%; }
+        /* --- 工具栏：改为 5 按钮适配 --- */
+        .calendar-tools { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-bottom: 15px; width: 100%; }
         .tool-btn { 
-            background: #fff; border: 1px solid #e2e8f0; padding: 10px 4px; 
-            border-radius: 14px; font-size: 10px; color: var(--text-main); 
+            background: #fff; border: 1px solid #e2e8f0; padding: 10px 2px; 
+            border-radius: 12px; font-size: 9px; color: var(--text-main); 
             font-weight: 700; cursor: pointer; text-align: center;
             box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            white-space: nowrap;
         }
 
         /* --- 日历 --- */
@@ -112,7 +109,7 @@
         .amt-income { color: var(--success); }
         .amt-expense { color: var(--danger); }
 
-        /* --- 弹窗与对齐修复 --- */
+        /* --- 弹窗 --- */
         .fab { position: fixed; bottom: 30px; right: 20px; width: 64px; height: 64px; background: #1e293b; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 99; cursor: pointer; }
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; align-items: flex-end; justify-content: center; z-index: 1000; backdrop-filter: blur(8px); }
         .modal-content { background: white; width: 100%; max-width: 440px; border-radius: 32px 32px 0 0; padding: 30px 20px 40px; }
@@ -122,15 +119,13 @@
             border: 1.5px solid #f1f5f9; padding: 0 15px; font-size: 16px; background: #f8fafc;
         }
         
-        /* 强制日期左对齐（兼容更多环境） */
         input[type="date"] {
-            display: flex !important; align-items: center !important; 
-            text-align: left !important; -webkit-appearance: none;
+            display: flex !important; align-items: center !important; text-align: left !important; -webkit-appearance: none;
             color: var(--text-main);
         }
         input[type="date"]::-webkit-date-and-time-value { 
             text-align: left !important; width: 100% !important; 
-            -webkit-text-fill-color: var(--text-main); /* 修复部分手机端灰色文字 */
+            -webkit-text-fill-color: var(--text-main);
         }
 
         .btn-save { width: 100%; background: #1e293b; color: white; padding: 18px; border-radius: 20px; font-weight: 800; border: none; font-size: 18px; cursor: pointer; }
@@ -160,11 +155,13 @@
         </div>
     </div>
 
+    <!-- 修复后的工具栏：5个按钮并排（缩小字体） -->
     <div class="calendar-tools">
         <div class="tool-btn" onclick="resetData()">🗑️ 清空</div>
         <div class="tool-btn" onclick="document.getElementById('importFile').click()">📥 导入</div>
-        <div class="tool-btn" onclick="exportToCSV(true)">📁 当月导出</div>
-        <div class="tool-btn" onclick="setBudget()">🎯 预算设置</div>
+        <div class="tool-btn" onclick="exportToCSV(true)">📁 当月</div>
+        <div class="tool-btn" onclick="exportToCSV(false)">📤 全部</div>
+        <div class="tool-btn" onclick="setBudget()">🎯 预算</div>
         <input type="file" id="importFile" accept=".csv" style="display:none" onchange="importFromCSV(this)">
     </div>
 
@@ -228,7 +225,6 @@
     function renderDashboard() {
         const year = calendarDate.getFullYear(), month = calendarDate.getMonth();
         const todayStr = getISODate(new Date());
-        
         let yExp = 0, yInc = 0, yData = Array(12).fill(0);
         let cateStats = {}, totalMExp = 0, totalMInc = 0, totalTodayExp = 0;
 
@@ -236,7 +232,6 @@
             const d = new Date(r.date);
             const isExp = r.category !== '收入';
             if(r.date === todayStr && isExp) totalTodayExp += r.amount;
-
             if(d.getFullYear() === year) {
                 const m = d.getMonth();
                 if(!isExp) {
@@ -265,12 +260,10 @@
             const sortedCates = Object.entries(cateStats).sort((a,b)=>b-a);
             let barHtml = '<div class="segmented-progress">';
             let legendHtml = '<div class="progress-legend">';
-            
             if(monthBudget > 0) {
                 const remain = monthBudget - totalMExp;
-                legendHtml += `<div class="legend-item" style="color:#fff; font-weight:800">🎯 剩余预算: ¥${remain.toFixed(0)}</div>`;
+                legendHtml += `<div class="legend-item" style="color:#fff; font-weight:800">🎯 剩余: ¥${remain.toFixed(0)}</div>`;
             }
-
             sortedCates.forEach(([cat, val], idx) => {
                 const ratio = (val / (totalMExp || 1) * 100).toFixed(1);
                 const color = lightProgressColors[idx % lightProgressColors.length];
@@ -284,7 +277,7 @@
 
         document.getElementById('year-label-text').innerText = `${year}年度收支统计 (点击返回)`;
         document.getElementById('year-balance').innerText = `¥ ${(yInc - yExp).toFixed(2)}`;
-        const advice = (yInc - yExp) > 0 ? "🎉 今年盈余不错，继续保持！" : "⚠️ 目前结余为负，建议缩减开支。";
+        const advice = (yInc - yExp) > 0 ? "🎉 今年盈余不错！" : "⚠️ 处于负债状态。";
         document.getElementById('year-advice').innerText = advice;
 
         const maxVal = Math.max(...yData, 1);
@@ -296,7 +289,7 @@
     }
 
     function setBudget() {
-        const b = prompt("请输入月度预算金额（元）：", monthBudget);
+        const b = prompt("请输入月度预算金额：", monthBudget);
         if(b !== null) {
             monthBudget = parseFloat(b) || 0;
             localStorage.setItem(BUDGET_KEY, monthBudget);
@@ -328,7 +321,7 @@
     function renderDayDetail() {
         const list = document.getElementById('day-detail-list');
         const dayRecs = records.filter(r => r.date === selectedDateStr).sort((a,b)=>b.id-a.id);
-        list.innerHTML = dayRecs.length ? '' : `<p style="text-align:center; opacity:0.3; padding:40px; font-size:14px">📅 ${selectedDateStr}<br>这一天没有记账</p>`;
+        list.innerHTML = dayRecs.length ? '' : `<p style="text-align:center; opacity:0.3; padding:40px; font-size:14px">📅 ${selectedDateStr}<br>无记账记录</p>`;
         dayRecs.forEach(r => {
             const isInc = r.category==='收入';
             list.innerHTML += `
@@ -369,18 +362,15 @@
         const cateInput = document.getElementById('category');
         const amt = parseFloat(amtInput.value);
         if(!amt) return alert('请输入金额');
-        
         const newRecord = { 
             id:Date.now(), date:document.getElementById('date-input').value, amount:amt, 
             category:cateInput.value, desc:descInput.value, 
             time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',hour12:false}) 
         };
-        
         if (descInput.value.trim() !== "") {
             descMemory[cateInput.value] = descInput.value;
             localStorage.setItem(MEMORY_KEY, JSON.stringify(descMemory));
         }
-
         records.push(newRecord);
         saveData(); 
         amtInput.value=''; descInput.value=''; toggleModal(false); refreshAll();
@@ -397,7 +387,7 @@
             });
             filename = `${y}-${String(m+1).padStart(2,'0')}_账单.csv`;
         }
-        if(filtered.length === 0) return alert('没有可导出的数据');
+        if(filtered.length === 0) return alert('没有导出数据');
         let csv = "\uFEFF日期,时间,分类,金额,描述\n"; 
         filtered.sort((a,b) => a.date.localeCompare(b.date)).forEach(r => {
             csv += `${r.date},${r.time||'00:00'},${r.category},${r.amount},${r.desc||''}\n`;
