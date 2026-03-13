@@ -24,7 +24,7 @@
 
         /* --- 看板 --- */
         .dashboard-wrapper {
-            position: relative; width: 100%; height: 220px; 
+            position: relative; width: 100%; height: 235px; 
             perspective: 1000px; margin-bottom: 20px;
         }
         .dashboard {
@@ -42,27 +42,38 @@
         }
         .db-back { transform: rotateY(180deg); justify-content: center; }
 
-        .stats-row { display: flex; justify-content: space-between; margin-bottom: 10px; }
+        .stats-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
         .stat-item h3 { font-size: 24px; margin: 4px 0; font-weight: 800; }
         .stat-item p { font-size: 11px; opacity: 0.8; margin: 0; }
         
+        .today-badge { 
+            background: rgba(255,255,255,0.2); font-size: 10px; 
+            padding: 2px 8px; border-radius: 20px; align-self: flex-start;
+            margin-bottom: 12px;
+        }
+
         .segmented-progress {
             display: flex; height: 12px; width: 100%; 
             background: rgba(255, 255, 255, 0.1); 
-            border-radius: 10px; overflow: hidden; margin: 15px 0 12px 0;
+            border-radius: 10px; overflow: hidden; margin: 10px 0;
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
         .progress-segment { height: 100%; transition: width 0.6s ease; border-right: 0.5px solid rgba(255,255,255,0.1); }
-        .progress-legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 5px; }
+        .progress-legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 2px; }
         .legend-item { display: flex; align-items: center; font-size: 10px; gap: 4px; opacity: 0.85; }
         .legend-dot { width: 6px; height: 6px; border-radius: 50%; }
 
-        .chart-bars { display: flex; align-items: flex-end; justify-content: space-between; height: 60px; gap: 4px; }
+        /* 背面标题间距优化 */
+        .yearly-title { 
+            font-size: 10px; opacity: 0.7; text-align: center; 
+            margin-bottom: 22px; letter-spacing: 1px;
+        }
+        .chart-bars { display: flex; align-items: flex-end; justify-content: space-between; height: 65px; gap: 4px; }
         .bar { width: 100%; min-height: 4px; border-radius: 3px; transition: 0.3s; }
         .bar.selected { border: 2px solid white; transform: scaleY(1.1); box-shadow: 0 0 10px white; }
         .year-summary-box { 
-            margin-top: 20px; background: rgba(255,255,255,0.12); padding: 12px; 
-            border-radius: 16px; text-align: center; font-size: 13px;
+            margin-top: 24px; background: rgba(255,255,255,0.12); padding: 12px; 
+            border-radius: 16px; text-align: center; font-size: 12px;
         }
 
         /* --- 工具栏 --- */
@@ -101,7 +112,7 @@
         .amt-income { color: var(--success); }
         .amt-expense { color: var(--danger); }
 
-        /* --- 弹窗与布局优化 --- */
+        /* --- 弹窗与对齐修复 --- */
         .fab { position: fixed; bottom: 30px; right: 20px; width: 64px; height: 64px; background: #1e293b; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 99; cursor: pointer; }
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; align-items: flex-end; justify-content: center; z-index: 1000; backdrop-filter: blur(8px); }
         .modal-content { background: white; width: 100%; max-width: 440px; border-radius: 32px 32px 0 0; padding: 30px 20px 40px; }
@@ -109,19 +120,17 @@
         input, select { 
             width: 100%; height: 54px; margin-bottom: 15px; border-radius: 18px; 
             border: 1.5px solid #f1f5f9; padding: 0 15px; font-size: 16px; background: #f8fafc;
-            color: var(--text-main);
         }
         
-        /* 强制日期左对齐 */
+        /* 强制日期左对齐（兼容更多环境） */
         input[type="date"] {
-            display: flex !important;
-            align-items: center !important;
-            text-align: left !important;
-            -webkit-appearance: none;
+            display: flex !important; align-items: center !important; 
+            text-align: left !important; -webkit-appearance: none;
+            color: var(--text-main);
         }
-        input[type="date"]::-webkit-date-and-time-value {
-            text-align: left !important;
-            width: 100% !important;
+        input[type="date"]::-webkit-date-and-time-value { 
+            text-align: left !important; width: 100% !important; 
+            -webkit-text-fill-color: var(--text-main); /* 修复部分手机端灰色文字 */
         }
 
         .btn-save { width: 100%; background: #1e293b; color: white; padding: 18px; border-radius: 20px; font-weight: 800; border: none; font-size: 18px; cursor: pointer; }
@@ -133,17 +142,19 @@
     <div class="dashboard-wrapper">
         <div class="dashboard" id="main-db" onclick="this.classList.toggle('flipped')">
             <div class="db-front">
+                <div class="today-badge">📅 今日支出：<span id="today-expense">¥ 0.00</span></div>
                 <div class="stats-row">
-                    <div class="stat-item"><p id="m-label-exp">支出</p><h3 id="month-expense">¥ 0.00</h3></div>
-                    <div class="stat-item" style="text-align: right;"><p id="m-label-inc">收入</p><h3 id="month-income">¥ 0.00</h3></div>
+                    <div class="stat-item"><p id="m-label-exp">本月支出</p><h3 id="month-expense">¥ 0.00</h3></div>
+                    <div class="stat-item" style="text-align: right;"><p id="m-label-inc">本月收入</p><h3 id="month-income">¥ 0.00</h3></div>
                 </div>
                 <div id="progress-container"></div>
             </div>
             <div class="db-back">
-                <div class="yearly-title" id="year-label-text">年度统计</div>
+                <div class="yearly-title" id="year-label-text">年度统计 (点击返回)</div>
                 <div class="chart-bars" id="yearly-bars"></div>
                 <div class="year-summary-box">
-                    <span>年度总结余：</span><b id="year-balance" style="font-size: 16px; margin-left: 5px;">¥ 0.00</b>
+                    <span>年度总结余：</span><b id="year-balance">¥ 0.00</b><br>
+                    <small id="year-advice" style="opacity: 0.8; margin-top: 6px; display: inline-block;"></small>
                 </div>
             </div>
         </div>
@@ -153,7 +164,7 @@
         <div class="tool-btn" onclick="resetData()">🗑️ 清空</div>
         <div class="tool-btn" onclick="document.getElementById('importFile').click()">📥 导入</div>
         <div class="tool-btn" onclick="exportToCSV(true)">📁 当月导出</div>
-        <div class="tool-btn" onclick="exportToCSV(false)">📤 全部导出</div>
+        <div class="tool-btn" onclick="setBudget()">🎯 预算设置</div>
         <input type="file" id="importFile" accept=".csv" style="display:none" onchange="importFromCSV(this)">
     </div>
 
@@ -175,7 +186,6 @@
     <div class="modal-content">
         <h3 style="text-align: center; margin-top:0; margin-bottom: 20px;">新记一笔</h3>
         <input type="date" id="date-input">
-        <!-- 分类切换时触发记忆备注 -->
         <select id="category" onchange="applyMemory(this.value)">
             <option value="餐饮">🍔 餐饮美食</option>
             <option value="交通">🚗 交通出行</option>
@@ -194,10 +204,13 @@
 <script>
     const STORAGE_KEY = 'cal_ledger_v6';
     const MEMORY_KEY = 'ledger_desc_memory';
+    const BUDGET_KEY = 'ledger_budget';
+    
     let records = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     let descMemory = JSON.parse(localStorage.getItem(MEMORY_KEY)) || {};
-    let calendarDate = new Date();
+    let monthBudget = localStorage.getItem(BUDGET_KEY) || 0;
     
+    let calendarDate = new Date();
     const getISODate = (d) => {
         const date = new Date(d);
         return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -214,14 +227,19 @@
 
     function renderDashboard() {
         const year = calendarDate.getFullYear(), month = calendarDate.getMonth();
+        const todayStr = getISODate(new Date());
+        
         let yExp = 0, yInc = 0, yData = Array(12).fill(0);
-        let cateStats = {}, totalMExp = 0, totalMInc = 0;
+        let cateStats = {}, totalMExp = 0, totalMInc = 0, totalTodayExp = 0;
 
         records.forEach(r => {
             const d = new Date(r.date);
+            const isExp = r.category !== '收入';
+            if(r.date === todayStr && isExp) totalTodayExp += r.amount;
+
             if(d.getFullYear() === year) {
                 const m = d.getMonth();
-                if(r.category === '收入') {
+                if(!isExp) {
                     yInc += r.amount;
                     if(m === month) totalMInc += r.amount;
                 } else {
@@ -235,20 +253,26 @@
             }
         });
 
+        document.getElementById('today-expense').innerText = `¥ ${totalTodayExp.toFixed(2)}`;
         document.getElementById('month-expense').innerText = `¥ ${totalMExp.toFixed(2)}`;
         document.getElementById('month-income').innerText = `¥ ${totalMInc.toFixed(2)}`;
         document.getElementById('m-label-exp').innerText = (month+1) + '月支出';
-        document.getElementById('m-label-inc').innerText = (month+1) + '月收入';
 
         const progContainer = document.getElementById('progress-container');
-        if(totalMExp === 0) {
+        if(totalMExp === 0 && monthBudget == 0) {
             progContainer.innerHTML = '<p style="text-align:center; opacity:0.6; padding-top:20px; font-size:12px">本月暂无支出记录</p>';
         } else {
             const sortedCates = Object.entries(cateStats).sort((a,b)=>b-a);
             let barHtml = '<div class="segmented-progress">';
             let legendHtml = '<div class="progress-legend">';
+            
+            if(monthBudget > 0) {
+                const remain = monthBudget - totalMExp;
+                legendHtml += `<div class="legend-item" style="color:#fff; font-weight:800">🎯 剩余预算: ¥${remain.toFixed(0)}</div>`;
+            }
+
             sortedCates.forEach(([cat, val], idx) => {
-                const ratio = (val / totalMExp * 100).toFixed(1);
+                const ratio = (val / (totalMExp || 1) * 100).toFixed(1);
                 const color = lightProgressColors[idx % lightProgressColors.length];
                 if(ratio > 1) {
                     barHtml += `<div class="progress-segment" style="width: ${ratio}%; background: ${color}"></div>`;
@@ -258,14 +282,26 @@
             progContainer.innerHTML = barHtml + '</div>' + legendHtml + '</div>';
         }
 
-        document.getElementById('year-label-text').innerText = `${year}年度统计 (点击返回)`;
+        document.getElementById('year-label-text').innerText = `${year}年度收支统计 (点击返回)`;
         document.getElementById('year-balance').innerText = `¥ ${(yInc - yExp).toFixed(2)}`;
+        const advice = (yInc - yExp) > 0 ? "🎉 今年盈余不错，继续保持！" : "⚠️ 目前结余为负，建议缩减开支。";
+        document.getElementById('year-advice').innerText = advice;
+
         const maxVal = Math.max(...yData, 1);
         document.getElementById('yearly-bars').innerHTML = yData.map((val, i) => {
             const h = (val / maxVal) * 100;
             const isCur = i === month;
             return `<div class="bar ${isCur?'selected':''}" style="height:${Math.max(h, 8)}%; background:${isCur?'#fff':barColors[i%10]}"></div>`;
         }).join('');
+    }
+
+    function setBudget() {
+        const b = prompt("请输入月度预算金额（元）：", monthBudget);
+        if(b !== null) {
+            monthBudget = parseFloat(b) || 0;
+            localStorage.setItem(BUDGET_KEY, monthBudget);
+            refreshAll();
+        }
     }
 
     function renderCalendar() {
@@ -321,14 +357,10 @@
         }
     }
 
-    // 备注记忆功能
     function applyMemory(category) {
         const descInput = document.getElementById('desc');
-        if (descMemory[category]) {
-            descInput.value = descMemory[category];
-        } else {
-            descInput.value = '';
-        }
+        if (descMemory[category]) descInput.value = descMemory[category];
+        else descInput.value = '';
     }
 
     function addRecord() {
@@ -339,15 +371,11 @@
         if(!amt) return alert('请输入金额');
         
         const newRecord = { 
-            id:Date.now(), 
-            date:document.getElementById('date-input').value, 
-            amount:amt, 
-            category:cateInput.value, 
-            desc:descInput.value, 
+            id:Date.now(), date:document.getElementById('date-input').value, amount:amt, 
+            category:cateInput.value, desc:descInput.value, 
             time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',hour12:false}) 
         };
         
-        // 保存备注记忆
         if (descInput.value.trim() !== "") {
             descMemory[cateInput.value] = descInput.value;
             localStorage.setItem(MEMORY_KEY, JSON.stringify(descMemory));
@@ -387,7 +415,7 @@
         }
         document.getElementById('add-modal').style.display = s ? 'flex' : 'none'; 
     }
-    function resetData() { if(confirm('确定清空所有数据？')) { records=[]; descMemory={}; localStorage.removeItem(MEMORY_KEY); saveData(); refreshAll(); } }
+    function resetData() { if(confirm('确定清空所有数据？')) { records=[]; descMemory={}; localStorage.clear(); refreshAll(); } }
     function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(records)); }
     function changeMonth(s) { calendarDate.setMonth(calendarDate.getMonth()+s); refreshAll(); }
     function changeYear(s) { calendarDate.setFullYear(calendarDate.getFullYear()+s); refreshAll(); }
