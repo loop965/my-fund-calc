@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>私密记事</title>
+    <title>Daily 随手记</title>
     <style>
         :root {
             --ios-purple: linear-gradient(135deg, #8162f1 0%, #b28ef3 100%);
@@ -71,7 +71,6 @@
         .note-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .note-time { font-size: 12px; color: var(--text-sub); font-weight: 600; }
 
-        /* 按钮组 */
         .btn-group { display: flex; gap: 8px; }
         .btn-action { 
             font-size: 11px; font-weight: 600; border: none; 
@@ -79,24 +78,19 @@
             transition: all 0.2s;
         }
         .btn-copy { background: var(--accent-gray); color: var(--accent-blue); }
-        .btn-copy:active { background: var(--accent-blue); color: #fff; }
         .btn-del { background: rgba(255, 59, 48, 0.08); color: var(--accent-red); }
-        .btn-del:active { background: var(--accent-red); color: #fff; }
 
         .note-content { font-size: 16px; line-height: 1.5; color: var(--text-main); word-break: break-all; }
+        
+        /* 网址链接样式 */
+        .note-content a { color: var(--accent-blue); text-decoration: underline; }
+
         .lock-placeholder { 
             color: var(--text-sub); display: flex; align-items: center; gap: 8px; 
             font-size: 15px; padding: 6px 0; font-style: italic;
         }
-        .btn-single-unlock {
-            color: var(--accent-blue); background: none; border: none; font-size: 14px; font-weight: 600; cursor: pointer;
-        }
-        
-        .toast {
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            background: rgba(0,0,0,0.7); color: white; padding: 10px 20px;
-            border-radius: 25px; font-size: 14px; display: none; z-index: 1000;
-        }
+        .btn-single-unlock { color: var(--accent-blue); background: none; border: none; font-size: 14px; font-weight: 600; cursor: pointer; }
+        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); color: white; padding: 10px 20px; border-radius: 25px; font-size: 14px; display: none; z-index: 1000; }
     </style>
 </head>
 <body>
@@ -116,7 +110,7 @@
 
     <div class="input-wrapper">
         <div class="input-card">
-            <input type="text" id="noteInput" placeholder="在此记录..." autocomplete="off">
+            <input type="text" id="noteInput" placeholder="在此记录 (支持网址自动识别)..." autocomplete="off">
             <button class="btn-add" onclick="addNote()">+</button>
         </div>
     </div>
@@ -135,10 +129,19 @@
     
     const CORRECT_PASS = "8957"; 
     const AUTO_LOCK_TIME = 60; 
-    let notes = JSON.parse(localStorage.getItem('ios17_notes_final') || '[]');
+    let notes = JSON.parse(localStorage.getItem('ios17_daily_v5') || '[]');
     let isUnlocked = false;
     let lockTimer = null;
     let timeLeft = 0;
+
+    // 核心：识别网址的正则函数
+    function linkify(text) {
+        const urlPattern = /(https?:\/\/[^\s]+|www\.[^\s]+)/g;
+        return text.replace(urlPattern, (url) => {
+            let fullUrl = url.startsWith('http') ? url : 'http://' + url;
+            return `<a href="${fullUrl}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+        });
+    }
 
     function render() {
         countDisplay.innerText = `${notes.length} 条记录`;
@@ -147,7 +150,7 @@
         timerBar.style.display = isUnlocked ? 'block' : 'none';
 
         if (notes.length === 0) {
-            list.innerHTML = '<div style="text-align:center; color:#8e8e93; margin-top:80px; font-size:15px;">暂无内容</div>';
+            list.innerHTML = '<div style="text-align:center; color:#8e8e93; margin-top:80px; font-size:15px;">暂无 Daily 记录</div>';
             return;
         }
 
@@ -162,7 +165,7 @@
                 </div>
                 <div class="note-content">
                     ${isUnlocked 
-                        ? `<div id="text-${note.id}">${escapeHTML(note.text)}</div>` 
+                        ? `<div>${linkify(escapeHTML(note.text))}</div>` 
                         : `<div class="lock-placeholder">🔒 内容已隐藏 <button class="btn-single-unlock" onclick="handleLockAction()">点此查看</button></div>`
                     }
                 </div>
@@ -173,19 +176,14 @@
     function handleLockAction() {
         if (isUnlocked) { lockData(); } 
         else {
-            const pass = prompt("请输入密码查看：");
+            const pass = prompt("请输入管理密码：");
             if (pass === CORRECT_PASS) { unlockData(); } 
             else if (pass !== null) { alert("密码错误"); }
         }
     }
 
-    function unlockData() {
-        isUnlocked = true; timeLeft = AUTO_LOCK_TIME; render(); startTimer();
-    }
-
-    function lockData() {
-        isUnlocked = false; clearInterval(lockTimer); render();
-    }
+    function unlockData() { isUnlocked = true; timeLeft = AUTO_LOCK_TIME; render(); startTimer(); }
+    function lockData() { isUnlocked = false; clearInterval(lockTimer); render(); }
 
     function startTimer() {
         clearInterval(lockTimer);
@@ -209,7 +207,7 @@
         const text = input.value.trim();
         if (!text) return;
         notes.unshift({ id: Date.now(), text, time: new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'}) });
-        localStorage.setItem('ios17_notes_final', JSON.stringify(notes));
+        localStorage.setItem('ios17_daily_v5', JSON.stringify(notes));
         input.value = '';
         render();
     }
@@ -217,7 +215,7 @@
     function deleteNote(id) {
         if(confirm("确定删除？")) {
             notes = notes.filter(n => n.id !== id);
-            localStorage.setItem('ios17_notes_final', JSON.stringify(notes));
+            localStorage.setItem('ios17_daily_v5', JSON.stringify(notes));
             render();
         }
     }
