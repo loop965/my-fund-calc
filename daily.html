@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>私密记事</title>
+    <style>
+        :root {
+            --ios-purple: linear-gradient(135deg, #8162f1 0%, #b28ef3 100%);
+            --bg-color: #f2f2f7;
+            --card-bg: #ffffff;
+            --text-main: #1c1c1e;
+            --text-sub: #8e8e93;
+            --accent-blue: #007aff;
+            --accent-red: #ff3b30;
+            --accent-gray: #f2f2f7;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body { 
+            margin: 0; background-color: var(--bg-color); 
+            font-family: -apple-system, "SF Pro Display", sans-serif;
+            color: var(--text-main); padding-bottom: 50px;
+        }
+
+        .header {
+            background: var(--ios-purple); height: 180px; padding: 50px 25px 0;
+            color: white; border-bottom-left-radius: 40px; border-bottom-right-radius: 40px;
+            box-shadow: 0 10px 30px rgba(129, 98, 241, 0.3); position: relative;
+        }
+
+        .header-top { display: flex; justify-content: space-between; align-items: flex-start; }
+        .header h1 { margin: 0; font-size: 32px; font-weight: 800; letter-spacing: -1px; }
+        .header p { margin: 5px 0 0; opacity: 0.7; font-size: 14px; }
+
+        .timer-bar {
+            position: absolute; bottom: 45px; left: 25px; right: 25px;
+            height: 3px; background: rgba(255,255,255,0.2);
+            border-radius: 2px; overflow: hidden; display: none;
+        }
+        .timer-progress { height: 100%; background: #fff; width: 100%; transition: width 1s linear; }
+
+        .unlock-master {
+            background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px); border: none; width: 44px; height: 44px; 
+            border-radius: 14px; display: flex; align-items: center; justify-content: center;
+            font-size: 20px; transition: all 0.3s;
+        }
+        .unlock-master.active { background: #fff; transform: scale(1.1); }
+
+        .input-wrapper { padding: 0 20px; margin-top: -25px; position: relative; z-index: 10; }
+        .input-card {
+            background: var(--card-bg); border-radius: 20px; padding: 10px 10px 10px 20px;
+            display: flex; align-items: center; box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+        }
+        input { flex: 1; border: none; outline: none; font-size: 17px; background: transparent; color: var(--text-main); }
+        .btn-add {
+            background: var(--ios-purple); color: white; border: none;
+            width: 44px; height: 44px; border-radius: 14px;
+            font-size: 26px; font-weight: 300; cursor: pointer;
+        }
+
+        .list-section { padding: 30px 20px; }
+        .note-item {
+            background: var(--card-bg); border-radius: 22px; padding: 18px; margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03); animation: slideUp 0.4s ease;
+        }
+        @keyframes slideUp { from { opacity:0; transform:translateY(15px); } to { opacity:1; transform:translateY(0); } }
+
+        .note-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .note-time { font-size: 12px; color: var(--text-sub); font-weight: 600; }
+
+        /* 按钮组 */
+        .btn-group { display: flex; gap: 8px; }
+        .btn-action { 
+            font-size: 11px; font-weight: 600; border: none; 
+            padding: 5px 12px; border-radius: 20px; cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-copy { background: var(--accent-gray); color: var(--accent-blue); }
+        .btn-copy:active { background: var(--accent-blue); color: #fff; }
+        .btn-del { background: rgba(255, 59, 48, 0.08); color: var(--accent-red); }
+        .btn-del:active { background: var(--accent-red); color: #fff; }
+
+        .note-content { font-size: 16px; line-height: 1.5; color: var(--text-main); word-break: break-all; }
+        .lock-placeholder { 
+            color: var(--text-sub); display: flex; align-items: center; gap: 8px; 
+            font-size: 15px; padding: 6px 0; font-style: italic;
+        }
+        .btn-single-unlock {
+            color: var(--accent-blue); background: none; border: none; font-size: 14px; font-weight: 600; cursor: pointer;
+        }
+        
+        .toast {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.7); color: white; padding: 10px 20px;
+            border-radius: 25px; font-size: 14px; display: none; z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="header-top">
+            <div>
+                <h1 id="count">0 条记录</h1>
+                <p id="todayDate">2026年3月13日</p>
+            </div>
+            <button class="unlock-master" id="masterBtn" onclick="handleLockAction()">🔒</button>
+        </div>
+        <div class="timer-bar" id="timerBar">
+            <div class="timer-progress" id="timerProgress"></div>
+        </div>
+    </div>
+
+    <div class="input-wrapper">
+        <div class="input-card">
+            <input type="text" id="noteInput" placeholder="在此记录..." autocomplete="off">
+            <button class="btn-add" onclick="addNote()">+</button>
+        </div>
+    </div>
+
+    <div id="noteList" class="list-section"></div>
+    <div id="toast" class="toast">已复制到剪贴板</div>
+
+<script>
+    const input = document.getElementById('noteInput');
+    const list = document.getElementById('noteList');
+    const countDisplay = document.getElementById('count');
+    const masterBtn = document.getElementById('masterBtn');
+    const timerBar = document.getElementById('timerBar');
+    const timerProgress = document.getElementById('timerProgress');
+    const toast = document.getElementById('toast');
+    
+    const CORRECT_PASS = "8957"; 
+    const AUTO_LOCK_TIME = 60; 
+    let notes = JSON.parse(localStorage.getItem('ios17_notes_final') || '[]');
+    let isUnlocked = false;
+    let lockTimer = null;
+    let timeLeft = 0;
+
+    function render() {
+        countDisplay.innerText = `${notes.length} 条记录`;
+        masterBtn.innerHTML = isUnlocked ? '🔓' : '🔒';
+        masterBtn.classList.toggle('active', isUnlocked);
+        timerBar.style.display = isUnlocked ? 'block' : 'none';
+
+        if (notes.length === 0) {
+            list.innerHTML = '<div style="text-align:center; color:#8e8e93; margin-top:80px; font-size:15px;">暂无内容</div>';
+            return;
+        }
+
+        list.innerHTML = notes.map(note => `
+            <div class="note-item">
+                <div class="note-meta">
+                    <span class="note-time">${note.time}</span>
+                    <div class="btn-group">
+                        ${isUnlocked ? `<button class="btn-action btn-copy" onclick="copyNote('${note.id}')">拷贝</button>` : ''}
+                        <button class="btn-action btn-del" onclick="deleteNote(${note.id})">删除</button>
+                    </div>
+                </div>
+                <div class="note-content">
+                    ${isUnlocked 
+                        ? `<div id="text-${note.id}">${escapeHTML(note.text)}</div>` 
+                        : `<div class="lock-placeholder">🔒 内容已隐藏 <button class="btn-single-unlock" onclick="handleLockAction()">点此查看</button></div>`
+                    }
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function handleLockAction() {
+        if (isUnlocked) { lockData(); } 
+        else {
+            const pass = prompt("请输入密码查看：");
+            if (pass === CORRECT_PASS) { unlockData(); } 
+            else if (pass !== null) { alert("密码错误"); }
+        }
+    }
+
+    function unlockData() {
+        isUnlocked = true; timeLeft = AUTO_LOCK_TIME; render(); startTimer();
+    }
+
+    function lockData() {
+        isUnlocked = false; clearInterval(lockTimer); render();
+    }
+
+    function startTimer() {
+        clearInterval(lockTimer);
+        timerProgress.style.width = '100%';
+        lockTimer = setInterval(() => {
+            timeLeft--;
+            timerProgress.style.width = (timeLeft / AUTO_LOCK_TIME) * 100 + '%';
+            if (timeLeft <= 0) lockData();
+        }, 1000);
+    }
+
+    function copyNote(id) {
+        const text = notes.find(n => n.id == id).text;
+        navigator.clipboard.writeText(text).then(() => {
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 1500);
+        });
+    }
+
+    function addNote() {
+        const text = input.value.trim();
+        if (!text) return;
+        notes.unshift({ id: Date.now(), text, time: new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'}) });
+        localStorage.setItem('ios17_notes_final', JSON.stringify(notes));
+        input.value = '';
+        render();
+    }
+
+    function deleteNote(id) {
+        if(confirm("确定删除？")) {
+            notes = notes.filter(n => n.id !== id);
+            localStorage.setItem('ios17_notes_final', JSON.stringify(notes));
+            render();
+        }
+    }
+
+    function escapeHTML(str) {
+        const p = document.createElement('p'); p.textContent = str; return p.innerHTML;
+    }
+
+    input.addEventListener('keypress', (e) => { if (e.key === 'Enter') addNote(); });
+    document.getElementById('todayDate').innerText = new Date().toLocaleDateString('zh-CN', { year:'numeric', month:'long', day:'numeric', weekday:'long' });
+
+    render();
+</script>
+
+</body>
+</html>
