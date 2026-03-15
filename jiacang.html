@@ -12,77 +12,66 @@
             --ios-bg: #F2F2F7;
             --ios-card: #FFFFFF;
             --ios-border: rgba(60, 60, 67, 0.1);
-            --ios-secondary-text: #8E8E93;
         }
 
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
 
         body {
             margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
             background-color: var(--ios-bg);
             color: #1C1C1E;
-            padding: env(safe-area-inset-top) 20px 40px;
+            padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom); /* 左右留白交给卡片容器 */
         }
 
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: 24px 4px 12px;
-        }
-
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 24px 20px 12px; }
         h1 { font-size: 28px; font-weight: 700; margin: 0; }
-        
         .clear-btn { color: var(--ios-blue); border: none; background: none; font-size: 16px; cursor: pointer; }
+        .section-title { font-size: 13px; color: #8E8E93; margin: 20px 20px 8px; font-weight: 500; }
 
-        .section-title { 
-            font-size: 13px; 
-            color: var(--ios-secondary-text); 
-            margin: 20px 0 8px 12px; 
-            font-weight: 500;
-        }
-
-        /* 加仓记录卡片 */
-        .card {
-            background: var(--ios-card);
-            border-radius: 14px;
+        /* 滑动容器 */
+        .swipe-container {
+            position: relative;
             overflow: hidden;
-            margin-bottom: 16px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-            position: relative; /* 为删除按钮定位 */
+            margin-bottom: 12px;
+            background-color: var(--ios-red); /* 底层背景色（删除色） */
         }
 
-        /* 顶部删除小图标 */
-        .card-del-btn {
+        /* 实际内容卡片 */
+        .swipe-content {
+            position: relative;
+            background: var(--ios-card);
+            transition: transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1);
+            z-index: 2;
+            padding: 0 16px;
+        }
+
+        /* 隐藏的删除按钮 */
+        .swipe-action {
             position: absolute;
-            top: 10px;
-            right: 12px;
-            width: 20px;
-            height: 20px;
-            background: #E5E5EA;
-            color: #8E8E93;
-            border-radius: 50%;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 80px;
+            background: var(--ios-red);
+            color: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 14px;
-            cursor: pointer;
-            z-index: 10;
+            font-size: 15px;
+            font-weight: 600;
+            z-index: 1;
         }
-        .card-del-btn:active { background: var(--ios-red); color: white; }
 
         .row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 14px 16px;
+            padding: 14px 0;
             border-bottom: 0.5px solid var(--ios-border);
         }
         .row:last-child { border-bottom: none; }
 
-        .row-label { font-size: 16px; }
-        
         input {
             border: none;
             background: none;
@@ -94,32 +83,24 @@
             font-weight: 500;
         }
 
+        .btn-area { padding: 0 20px; }
         .btn-add {
             width: 100%;
             padding: 14px;
             background: var(--ios-card);
             color: var(--ios-blue);
-            border-radius: 14px;
+            border-radius: 12px;
             border: none;
             font-size: 17px;
             font-weight: 500;
             margin-bottom: 24px;
         }
 
-        /* 结果卡片 */
-        .res-card { padding: 8px 0; background: white; }
+        .res-area { padding: 0 20px; }
+        .res-card { background: white; border-radius: 12px; padding: 8px 0; }
         .res-row { display: flex; justify-content: space-between; padding: 8px 16px; font-size: 16px; }
-        .res-row b { font-variant-numeric: tabular-nums; font-weight: 600; font-size: 17px; }
+        .res-row b { font-variant-numeric: tabular-nums; font-weight: 600; }
         .divider { height: 0.5px; background: var(--ios-border); margin: 6px 16px; }
-
-        .tag-auto { 
-            font-size: 11px; 
-            background: #F2F2F7; 
-            color: var(--ios-secondary-text); 
-            padding: 2px 6px; 
-            border-radius: 4px; 
-            margin-left: 6px;
-        }
     </style>
 </head>
 <body>
@@ -130,49 +111,111 @@
     </div>
 
     <div class="section-title">行情价格</div>
-    <div class="card">
-        <div class="row">
-            <div class="row-label">当前市场价格<span class="tag-auto" id="auto-label">自动最低</span></div>
+    <div class="swipe-content" style="margin: 0 20px; border-radius: 12px;">
+        <div class="row" style="padding: 14px 16px;">
+            <span>当前市场价格</span>
             <input type="number" id="currentPrice" value="0.640" step="0.001" oninput="calculate(true)">
         </div>
     </div>
 
-    <div class="section-title">记录列表</div>
+    <div class="section-title">向左滑动删除记录</div>
     <div id="buy-list">
-        <!-- 初始记录没有删除按钮，或者也可以加上 -->
-        <div class="card record-group">
-            <div class="row">
-                <span class="row-label">买入金额</span>
-                <input type="number" class="amt" value="10000" oninput="calculate()">
-            </div>
-            <div class="row">
-                <span class="row-label">成交单价</span>
-                <input type="number" class="pri" value="1.000" oninput="calculate()">
-            </div>
-        </div>
+        <!-- 记录模板 -->
     </div>
 
-    <button class="btn-add" onclick="addRecord()">+ 加仓记录</button>
+    <div class="btn-area">
+        <button class="btn-add" onclick="addRecord()">+ 加仓记录</button>
+    </div>
 
-    <div class="section-title">分析结果</div>
-    <div class="card res-card">
-        <div class="res-row"><span>总投入</span><b id="res-totalA">¥0.00</b></div>
-        <div class="res-row"><span>平均成本</span><b id="res-avgP" style="color:var(--ios-blue)">0.0000</b></div>
-        <div class="divider"></div>
-        <div class="res-row"><span>当前盈亏</span><b id="res-loss">0.00</b></div>
-        <div class="res-row"><span>收益率</span><b id="res-percent">0.00%</b></div>
-        <div class="divider"></div>
-        <div class="res-row"><span>回本需涨幅</span><b id="res-need">0.00%</b></div>
+    <div class="res-area">
+        <div class="section-title" style="margin-left: 0;">分析结果</div>
+        <div class="res-card">
+            <div class="res-row"><span>总投入</span><b id="res-totalA">¥0.00</b></div>
+            <div class="res-row"><span>平均成本</span><b id="res-avgP" style="color:var(--ios-blue)">0.0000</b></div>
+            <div class="divider"></div>
+            <div class="res-row"><span>当前盈亏</span><b id="res-loss">0.00</b></div>
+            <div class="res-row"><span>收益率</span><b id="res-percent">0.00%</b></div>
+            <div class="divider"></div>
+            <div class="res-row"><span>回本需涨幅</span><b id="res-need">0.00%</b></div>
+        </div>
     </div>
 
     <script>
         let isManualPrice = false;
 
-        function calculate(fromManual = false) {
-            if (fromManual) {
-                isManualPrice = true;
-                document.getElementById('auto-label').style.opacity = '0.3';
+        // 初始化
+        window.onload = () => { addRecord(); calculate(); };
+
+        function addRecord() {
+            isManualPrice = false;
+            const list = document.getElementById('buy-list');
+            const container = document.createElement('div');
+            container.className = 'swipe-container record-group';
+            
+            // 记录 ID 方便删除
+            const id = 'rec-' + Date.now();
+            container.id = id;
+
+            container.innerHTML = `
+                <div class="swipe-action" onclick="removeRecord('${id}')">删除</div>
+                <div class="swipe-content" ontouchstart="handleTouchStart(event)" ontouchmove="handleTouchMove(event)" ontouchend="handleTouchEnd(event)">
+                    <div class="row">
+                        <span>买入金额</span>
+                        <input type="number" class="amt" placeholder="输入金额" oninput="calculate()">
+                    </div>
+                    <div class="row">
+                        <span>成交单价</span>
+                        <input type="number" class="pri" placeholder="输入单价" oninput="calculate()">
+                    </div>
+                </div>
+            `;
+            list.appendChild(container);
+        }
+
+        function removeRecord(id) {
+            const el = document.getElementById(id);
+            el.style.height = el.offsetHeight + 'px';
+            el.style.transition = 'all 0.3s ease';
+            el.style.opacity = '0';
+            el.style.transform = 'translateX(-100%)';
+            setTimeout(() => { el.remove(); calculate(); }, 300);
+        }
+
+        // 滑动交互逻辑
+        let startX = 0;
+        let currentTranslate = 0;
+
+        function handleTouchStart(e) {
+            startX = e.touches[0].clientX;
+            const content = e.currentTarget;
+            content.style.transition = 'none';
+        }
+
+        function handleTouchMove(e) {
+            const touch = e.touches[0];
+            const diff = touch.clientX - startX;
+            const content = e.currentTarget;
+            // 只允许向左滑，最大滑出 80px
+            if (diff < 0 && diff > -100) {
+                content.style.transform = `translateX(${diff}px)`;
             }
+        }
+
+        function handleTouchEnd(e) {
+            const content = e.currentTarget;
+            content.style.transition = 'transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1)';
+            const matrix = new WebKitCSSMatrix(window.getComputedStyle(content).transform);
+            const currentX = matrix.m41;
+
+            if (currentX < -40) {
+                content.style.transform = 'translateX(-80px)';
+            } else {
+                content.style.transform = 'translateX(0)';
+            }
+        }
+
+        function calculate(fromManual = false) {
+            if (fromManual) isManualPrice = true;
 
             const records = document.querySelectorAll('.record-group');
             let totalAmount = 0, totalShares = 0, minPrice = Infinity;
@@ -191,64 +234,35 @@
                 document.getElementById('currentPrice').value = minPrice.toFixed(3);
             }
 
-            const currentPrice = parseFloat(document.getElementById('currentPrice').value) || 0;
+            const currP = parseFloat(document.getElementById('currentPrice').value) || 0;
             if (totalShares <= 0) return;
 
-            const avgCost = totalAmount / totalShares;
-            const marketVal = totalShares * currentPrice;
-            const loss = marketVal - totalAmount;
-            const lossPercent = (loss / totalAmount * 100).toFixed(2);
-            const needRise = currentPrice > 0 ? ((avgCost - currentPrice) / currentPrice * 100).toFixed(2) : 0;
+            const avgP = totalAmount / totalShares;
+            const loss = (totalShares * currP) - totalAmount;
+            const lossP = (loss / totalAmount * 100).toFixed(2);
+            const need = currP > 0 ? ((avgP - currP) / currP * 100).toFixed(2) : 0;
 
-            document.getElementById('res-totalA').innerText = '¥' + totalAmount.toLocaleString(undefined, {minimumFractionDigits:2});
-            document.getElementById('res-avgP').innerText = avgCost.toFixed(4);
+            document.getElementById('res-totalA').innerText = '¥' + totalAmount.toLocaleString();
+            document.getElementById('res-avgP').innerText = avgP.toFixed(4);
             
-            const lossEl = document.getElementById('res-loss');
-            const percEl = document.getElementById('res-percent');
-            
-            // 颜色修正：盈红亏绿
             const color = loss >= 0 ? 'var(--ios-red)' : 'var(--ios-green)';
-            lossEl.style.color = percEl.style.color = color;
+            document.getElementById('res-loss').innerText = (loss >= 0 ? '+' : '') + loss.toFixed(2);
+            document.getElementById('res-loss').style.color = color;
+            document.getElementById('res-percent').innerText = (loss >= 0 ? '+' : '') + lossP + '%';
+            document.getElementById('res-percent').style.color = color;
             
-            lossEl.innerText = (loss >= 0 ? '+' : '') + loss.toFixed(2);
-            percEl.innerText = (loss >= 0 ? '+' : '') + lossPercent + '%';
-            
-            const needEl = document.getElementById('res-need');
-            needEl.innerText = needRise + '%';
-            // 回本涨幅也根据盈亏显示颜色
-            needEl.style.color = needRise > 0 ? 'var(--ios-green)' : 'var(--ios-red)';
-        }
-
-        function addRecord() {
-            isManualPrice = false;
-            document.getElementById('auto-label').style.opacity = '1';
-            const list = document.getElementById('buy-list');
-            const div = document.createElement('div');
-            div.className = 'card record-group';
-            div.innerHTML = `
-                <div class="card-del-btn" onclick="this.parentElement.remove();calculate()">×</div>
-                <div class="row">
-                    <span class="row-label">买入金额</span>
-                    <input type="number" class="amt" placeholder="输入金额" oninput="calculate()">
-                </div>
-                <div class="row">
-                    <span class="row-label">成交单价</span>
-                    <input type="number" class="pri" placeholder="输入单价" oninput="calculate()">
-                </div>
-            `;
-            list.appendChild(div);
+            document.getElementById('res-need').innerText = need + '%';
+            document.getElementById('res-need').style.color = need > 0 ? 'var(--ios-green)' : 'var(--ios-red)';
         }
 
         function clearAll() {
-            if(confirm("确定清空数据吗？")) {
+            if(confirm("确定重置所有记录吗？")) {
                 isManualPrice = false;
                 document.getElementById('buy-list').innerHTML = '';
                 addRecord();
                 calculate();
             }
         }
-
-        window.onload = () => calculate();
     </script>
 </body>
 </html>
