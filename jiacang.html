@@ -3,161 +3,183 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>基金动态计算器</title>
+    <title>基金加仓计算</title>
     <style>
         :root {
             --ios-blue: #007AFF;
             --ios-red: #FF3B30;
             --ios-green: #34C759;
             --ios-bg: #F2F2F7;
-            --ios-card: rgba(255, 255, 255, 0.95);
+            --ios-card: #FFFFFF;
             --ios-border: rgba(60, 60, 67, 0.1);
+            --ios-secondary-text: #8E8E93;
         }
 
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
 
         body {
             margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", sans-serif;
             background-color: var(--ios-bg);
             color: #1C1C1E;
-            padding: env(safe-area-inset-top) 16px 40px;
+            padding: env(safe-area-inset-top) 20px 40px;
         }
 
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin: 20px 8px 10px;
+            margin: 24px 4px 12px;
         }
 
-        h1 { font-size: 24px; font-weight: 700; margin: 0; }
+        h1 { font-size: 28px; font-weight: 700; margin: 0; }
         
-        .clear-btn { color: var(--ios-red); border: none; background: none; font-size: 15px; cursor: pointer; }
+        .clear-btn { color: var(--ios-blue); border: none; background: none; font-size: 16px; cursor: pointer; }
 
-        .section-title { font-size: 13px; color: #8E8E93; text-transform: uppercase; margin: 15px 0 8px 12px; display: flex; justify-content: space-between; }
+        .section-title { 
+            font-size: 13px; 
+            color: var(--ios-secondary-text); 
+            margin: 20px 0 8px 12px; 
+            font-weight: 500;
+        }
 
+        /* 加仓记录卡片 */
         .card {
             background: var(--ios-card);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-radius: 12px;
+            border-radius: 14px;
             overflow: hidden;
-            margin-bottom: 12px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            margin-bottom: 16px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+            position: relative; /* 为删除按钮定位 */
         }
+
+        /* 顶部删除小图标 */
+        .card-del-btn {
+            position: absolute;
+            top: 10px;
+            right: 12px;
+            width: 20px;
+            height: 20px;
+            background: #E5E5EA;
+            color: #8E8E93;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            cursor: pointer;
+            z-index: 10;
+        }
+        .card-del-btn:active { background: var(--ios-red); color: white; }
 
         .row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px 16px;
+            padding: 14px 16px;
             border-bottom: 0.5px solid var(--ios-border);
         }
         .row:last-child { border-bottom: none; }
 
-        .row-label { font-size: 16px; color: #333; }
+        .row-label { font-size: 16px; }
         
         input {
             border: none;
             background: none;
             text-align: right;
-            font-size: 16px;
+            font-size: 17px;
             color: var(--ios-blue);
-            width: 120px;
+            width: 140px;
             outline: none;
             font-weight: 500;
-        }
-
-        .del-btn {
-            color: var(--ios-red);
-            font-size: 13px;
-            font-weight: 500;
-            cursor: pointer;
         }
 
         .btn-add {
             width: 100%;
             padding: 14px;
-            background: white;
+            background: var(--ios-card);
             color: var(--ios-blue);
-            border-radius: 12px;
+            border-radius: 14px;
             border: none;
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 20px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            font-size: 17px;
+            font-weight: 500;
+            margin-bottom: 24px;
         }
 
-        .res-card { background: #fff; padding: 12px 0; }
-        .res-row { display: flex; justify-content: space-between; padding: 6px 16px; font-size: 15px; }
-        .res-row b { font-variant-numeric: tabular-nums; }
-        .divider { height: 0.5px; background: var(--ios-border); margin: 8px 16px; }
+        /* 结果卡片 */
+        .res-card { padding: 8px 0; background: white; }
+        .res-row { display: flex; justify-content: space-between; padding: 8px 16px; font-size: 16px; }
+        .res-row b { font-variant-numeric: tabular-nums; font-weight: 600; font-size: 17px; }
+        .divider { height: 0.5px; background: var(--ios-border); margin: 6px 16px; }
 
-        .auto-tag { font-size: 10px; background: var(--ios-blue); color: white; padding: 2px 6px; border-radius: 4px; vertical-align: middle; margin-left: 5px; }
+        .tag-auto { 
+            font-size: 11px; 
+            background: #F2F2F7; 
+            color: var(--ios-secondary-text); 
+            padding: 2px 6px; 
+            border-radius: 4px; 
+            margin-left: 6px;
+        }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1>基金补仓计算</h1>
-        <button class="clear-btn" onclick="clearAll()">全部重置</button>
+        <h1>加仓计算</h1>
+        <button class="clear-btn" onclick="clearAll()">重置</button>
     </div>
 
-    <div class="section-title">行情监控 <span id="price-tip" style="display:none; color:var(--ios-blue);">已自动获取最低价</span></div>
+    <div class="section-title">行情价格</div>
     <div class="card">
         <div class="row">
-            <div class="row-label" style="font-weight: 600;">
-                当前市场价格 <span class="auto-tag">AUTO</span>
-            </div>
+            <div class="row-label">当前市场价格<span class="tag-auto" id="auto-label">自动最低</span></div>
             <input type="number" id="currentPrice" value="0.640" step="0.001" oninput="calculate(true)">
         </div>
     </div>
 
-    <div class="section-title">买入记录</div>
+    <div class="section-title">记录列表</div>
     <div id="buy-list">
-        <!-- 初始数据 -->
+        <!-- 初始记录没有删除按钮，或者也可以加上 -->
         <div class="card record-group">
             <div class="row">
                 <span class="row-label">买入金额</span>
                 <input type="number" class="amt" value="10000" oninput="calculate()">
             </div>
             <div class="row">
-                <span class="row-label">买入单价</span>
+                <span class="row-label">成交单价</span>
                 <input type="number" class="pri" value="1.000" oninput="calculate()">
             </div>
         </div>
     </div>
 
-    <button class="btn-add" onclick="addRecord()">+ 添加加仓记录</button>
+    <button class="btn-add" onclick="addRecord()">+ 加仓记录</button>
 
-    <div class="section-title">计算结果</div>
+    <div class="section-title">分析结果</div>
     <div class="card res-card">
-        <div class="res-row"><span>总投入金额</span><b id="res-totalA">¥0.00</b></div>
-        <div class="res-row"><span>总持仓份额</span><b id="res-totalS">0.00 份</b></div>
-        <div class="res-row"><span>平均持仓成本</span><b id="res-avgP" style="color:var(--ios-blue)">0.0000</b></div>
+        <div class="res-row"><span>总投入</span><b id="res-totalA">¥0.00</b></div>
+        <div class="res-row"><span>平均成本</span><b id="res-avgP" style="color:var(--ios-blue)">0.0000</b></div>
         <div class="divider"></div>
-        <div class="res-row"><span>盈亏金额</span><b id="res-loss">0.00</b></div>
-        <div class="res-row"><span>盈亏比例</span><b id="res-percent">0.00%</b></div>
+        <div class="res-row"><span>当前盈亏</span><b id="res-loss">0.00</b></div>
+        <div class="res-row"><span>收益率</span><b id="res-percent">0.00%</b></div>
         <div class="divider"></div>
-        <div class="res-row"><span>回本需涨幅</span><b id="res-need" style="color:var(--ios-red)">0.00%</b></div>
+        <div class="res-row"><span>回本需涨幅</span><b id="res-need">0.00%</b></div>
     </div>
 
     <script>
-        let isManualPrice = false; // 标记用户是否手动改过价格
+        let isManualPrice = false;
 
         function calculate(fromManual = false) {
-            if (fromManual) isManualPrice = true;
+            if (fromManual) {
+                isManualPrice = true;
+                document.getElementById('auto-label').style.opacity = '0.3';
+            }
 
             const records = document.querySelectorAll('.record-group');
-            let totalAmount = 0;
-            let totalShares = 0;
-            let minPrice = Infinity;
+            let totalAmount = 0, totalShares = 0, minPrice = Infinity;
 
             records.forEach(group => {
                 const amt = parseFloat(group.querySelector('.amt').value) || 0;
                 const pri = parseFloat(group.querySelector('.pri').value) || 0;
-                
                 if (amt > 0 && pri > 0) {
                     totalAmount += amt;
                     totalShares += amt / pri;
@@ -165,14 +187,11 @@
                 }
             });
 
-            // 如果用户没改过价格，且有有效的买入单价，则自动更新当前价为最低单价
             if (!isManualPrice && minPrice !== Infinity) {
                 document.getElementById('currentPrice').value = minPrice.toFixed(3);
-                document.getElementById('price-tip').style.display = 'inline';
             }
 
             const currentPrice = parseFloat(document.getElementById('currentPrice').value) || 0;
-
             if (totalShares <= 0) return;
 
             const avgCost = totalAmount / totalShares;
@@ -181,50 +200,49 @@
             const lossPercent = (loss / totalAmount * 100).toFixed(2);
             const needRise = currentPrice > 0 ? ((avgCost - currentPrice) / currentPrice * 100).toFixed(2) : 0;
 
-            // UI 更新
             document.getElementById('res-totalA').innerText = '¥' + totalAmount.toLocaleString(undefined, {minimumFractionDigits:2});
-            document.getElementById('res-totalS').innerText = totalShares.toFixed(2) + ' 份';
             document.getElementById('res-avgP').innerText = avgCost.toFixed(4);
             
             const lossEl = document.getElementById('res-loss');
             const percEl = document.getElementById('res-percent');
-            lossEl.innerText = (loss >= 0 ? '+' : '') + loss.toFixed(2) + ' 元';
+            
+            // 颜色修正：盈红亏绿
+            const color = loss >= 0 ? 'var(--ios-red)' : 'var(--ios-green)';
+            lossEl.style.color = percEl.style.color = color;
+            
+            lossEl.innerText = (loss >= 0 ? '+' : '') + loss.toFixed(2);
             percEl.innerText = (loss >= 0 ? '+' : '') + lossPercent + '%';
             
-            const color = loss >= 0 ? 'var(--ios-green)' : 'var(--ios-red)';
-            lossEl.style.color = percEl.style.color = color;
-            document.getElementById('res-need').innerText = needRise + '%';
+            const needEl = document.getElementById('res-need');
+            needEl.innerText = needRise + '%';
+            // 回本涨幅也根据盈亏显示颜色
+            needEl.style.color = needRise > 0 ? 'var(--ios-green)' : 'var(--ios-red)';
         }
 
         function addRecord() {
-            // 添加新行时，重置手动标记，让它再次自动获取最低价
             isManualPrice = false;
-            document.getElementById('price-tip').style.display = 'none';
-
+            document.getElementById('auto-label').style.opacity = '1';
             const list = document.getElementById('buy-list');
             const div = document.createElement('div');
             div.className = 'card record-group';
-            div.style.animation = 'slideIn 0.3s ease-out';
             div.innerHTML = `
+                <div class="card-del-btn" onclick="this.parentElement.remove();calculate()">×</div>
                 <div class="row">
                     <span class="row-label">买入金额</span>
                     <input type="number" class="amt" placeholder="输入金额" oninput="calculate()">
-                    <span class="del-btn" onclick="this.parentElement.parentElement.remove();calculate()">删除</span>
                 </div>
                 <div class="row">
-                    <span class="row-label">买入单价</span>
+                    <span class="row-label">成交单价</span>
                     <input type="number" class="pri" placeholder="输入单价" oninput="calculate()">
                 </div>
             `;
             list.appendChild(div);
-            window.scrollTo({ top: div.offsetTop - 100, behavior: 'smooth' });
         }
 
         function clearAll() {
-            if(confirm("确定清空所有数据吗？")) {
+            if(confirm("确定清空数据吗？")) {
                 isManualPrice = false;
                 document.getElementById('buy-list').innerHTML = '';
-                document.getElementById('price-tip').style.display = 'none';
                 addRecord();
                 calculate();
             }
