@@ -29,90 +29,100 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin: 24px 4px 12px;
+            margin: 15px 4px 10px;
         }
 
-        h1 { font-size: 28px; font-weight: 700; margin: 0; letter-spacing: -0.5px; }
-        .clear-btn { color: var(--ios-blue); border: none; background: none; font-size: 16px; cursor: pointer; }
+        h1 { font-size: 24px; font-weight: 700; margin: 0; letter-spacing: -0.5px; }
+        .clear-btn { color: var(--ios-blue); border: none; background: none; font-size: 15px; cursor: pointer; }
 
         .section-title { 
-            font-size: 13px; 
+            font-size: 12px; 
             color: var(--ios-secondary); 
-            margin: 20px 0 8px 12px; 
+            margin: 12px 0 6px 12px; 
             font-weight: 500;
+            text-transform: uppercase;
         }
 
         .card {
             background: var(--ios-card);
             border-radius: 14px;
             overflow: hidden;
-            margin-bottom: 16px;
+            margin-bottom: 10px;
             box-shadow: 0 1px 2px rgba(0,0,0,0.04);
             position: relative;
         }
 
-        /* 右上角删除按钮：不遮挡数字 */
         .card-del-btn {
             position: absolute;
-            top: 6px;
-            right: 6px;
-            width: 22px;
-            height: 22px;
+            top: 8px;
+            right: 8px;
+            width: 18px;
+            height: 18px;
             background: rgba(142, 142, 147, 0.12);
             color: #8E8E93;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 14px;
+            font-size: 12px;
             font-weight: bold;
             cursor: pointer;
             z-index: 10;
         }
-        .card-del-btn:active { background: var(--ios-red); color: white; }
 
         .row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 14px 16px;
+            padding: 10px 16px;
             border-bottom: 0.5px solid var(--ios-border);
         }
         .row:last-child { border-bottom: none; }
 
-        .row-label { font-size: 16px; }
+        .row-label { font-size: 15px; }
         
         input {
             border: none;
             background: none;
             text-align: right;
-            font-size: 17px;
+            font-size: 16px;
             color: var(--ios-blue);
-            width: 130px; /* 稍微缩窄一点，给右侧留出删除按钮的安全边距 */
+            width: 120px;
             outline: none;
             font-weight: 500;
-            padding-right: 12px; /* 增加右侧内边距，防止数字紧贴按钮 */
+            padding-right: 8px;
+        }
+
+        /* 本次盈亏显示 */
+        .single-res {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: #F2F2F7;
+            color: var(--ios-secondary);
         }
 
         .btn-add {
             width: 100%;
-            padding: 14px;
+            padding: 12px;
             background: var(--ios-card);
             color: var(--ios-blue);
-            border-radius: 14px;
+            border-radius: 12px;
             border: none;
-            font-size: 17px;
+            font-size: 16px;
             font-weight: 500;
-            margin-bottom: 24px;
+            margin-top: 5px;
+            margin-bottom: 5px;
             box-shadow: 0 1px 2px rgba(0,0,0,0.04);
         }
 
-        .res-card { padding: 8px 0; background: white; }
-        .res-row { display: flex; justify-content: space-between; padding: 8px 16px; font-size: 16px; }
-        .res-row b { font-variant-numeric: tabular-nums; font-weight: 600; font-size: 17px; }
-        .divider { height: 0.5px; background: var(--ios-border); margin: 6px 16px; }
+        .res-card { padding: 4px 0; background: white; }
+        .res-row { display: flex; justify-content: space-between; padding: 6px 16px; font-size: 15px; }
+        .res-row b { font-variant-numeric: tabular-nums; font-weight: 600; font-size: 16px; }
+        .divider { height: 0.5px; background: var(--ios-border); margin: 4px 16px; }
 
-        .tag-auto { font-size: 11px; background: #F2F2F7; color: var(--ios-secondary); padding: 2px 6px; border-radius: 4px; margin-left: 6px; }
+        .tag-auto { font-size: 10px; background: #F2F2F7; color: var(--ios-secondary); padding: 1px 4px; border-radius: 3px; margin-left: 4px; }
     </style>
 </head>
 <body>
@@ -125,7 +135,7 @@
     <div class="section-title">行情价格</div>
     <div class="card">
         <div class="row">
-            <div class="row-label">当前市场价格<span class="tag-auto">自动最低</span></div>
+            <div class="row-label">当前市场价格<span class="tag-auto">同步最新</span></div>
             <input type="number" id="currentPrice" value="1.000" step="0.001" oninput="calculate(true)">
         </div>
     </div>
@@ -135,13 +145,13 @@
 
     <button class="btn-add" onclick="addRecord()">+ 加仓记录</button>
 
-    <div class="section-title">分析结果</div>
+    <div class="section-title" style="margin-top: 5px;">分析结果</div>
     <div class="card res-card">
-        <div class="res-row"><span>总投入</span><b id="res-totalA">¥0.00</b></div>
-        <div class="res-row"><span>平均成本</span><b id="res-avgP" style="color:var(--ios-blue)">0.0000</b></div>
+        <div class="res-row"><span>总投入成本</span><b id="res-totalA">¥0.00</b></div>
+        <div class="res-row"><span>平均持仓成本</span><b id="res-avgP" style="color:var(--ios-blue)">0.0000</b></div>
         <div class="divider"></div>
-        <div class="res-row"><span>当前盈亏</span><b id="res-loss">0.00</b></div>
-        <div class="res-row"><span>收益率</span><b id="res-percent">0.00%</b></div>
+        <div class="res-row"><span>总盈亏金额</span><b id="res-loss">0.00</b></div>
+        <div class="res-row"><span>总收益率</span><b id="res-percent">0.00%</b></div>
         <div class="divider"></div>
         <div class="res-row"><span>回本需涨幅</span><b id="res-need">0.00%</b></div>
     </div>
@@ -152,43 +162,63 @@
         function calculate(fromManual = false) {
             if (fromManual) isManualPrice = true;
 
+            const currentPriceInput = document.getElementById('currentPrice');
             const records = document.querySelectorAll('.record-group');
-            let totalAmount = 0, totalShares = 0, minPrice = Infinity;
+            let totalAmount = 0, totalShares = 0, lastPrice = null;
 
+            // 第一遍循环：确定最新价逻辑
             records.forEach(group => {
                 const amt = parseFloat(group.querySelector('.amt').value) || 0;
                 const pri = parseFloat(group.querySelector('.pri').value) || 0;
                 if (amt > 0 && pri > 0) {
-                    totalAmount += amt;
-                    totalShares += amt / pri;
-                    if (pri < minPrice) minPrice = pri;
+                    lastPrice = pri;
                 }
             });
 
-            if (!isManualPrice && minPrice !== Infinity) {
-                document.getElementById('currentPrice').value = minPrice.toFixed(3);
+            if (!isManualPrice && lastPrice !== null) {
+                currentPriceInput.value = lastPrice.toFixed(3);
             }
 
-            const currentPrice = parseFloat(document.getElementById('currentPrice').value) || 0;
+            const currP = parseFloat(currentPriceInput.value) || 0;
+
+            // 第二遍循环：计算总计和每笔盈亏
+            records.forEach(group => {
+                const amt = parseFloat(group.querySelector('.amt').value) || 0;
+                const pri = parseFloat(group.querySelector('.pri').value) || 0;
+                const singleResEl = group.querySelector('.single-res');
+                
+                if (amt > 0 && pri > 0) {
+                    totalAmount += amt;
+                    totalShares += amt / pri;
+                    
+                    // 计算单笔盈亏
+                    const singleLossPercent = ((currP - pri) / pri * 100).toFixed(2);
+                    singleResEl.innerText = (singleLossPercent >= 0 ? '+' : '') + singleLossPercent + '%';
+                    singleResEl.style.color = singleLossPercent >= 0 ? 'var(--ios-red)' : 'var(--ios-green)';
+                    singleResEl.style.opacity = '1';
+                } else {
+                    singleResEl.style.opacity = '0';
+                }
+            });
+
             if (totalShares <= 0) return;
 
             const avgCost = totalAmount / totalShares;
-            const marketVal = totalShares * currentPrice;
-            const loss = marketVal - totalAmount;
-            const lossPercent = (loss / totalAmount * 100).toFixed(2);
-            const needRise = currentPrice > 0 ? ((avgCost - currentPrice) / currentPrice * 100).toFixed(2) : 0;
+            const marketVal = totalShares * currP;
+            const totalLoss = marketVal - totalAmount;
+            const totalLossPercent = (totalLoss / totalAmount * 100).toFixed(2);
+            const needRise = currP > 0 ? ((avgCost - currP) / currP * 100).toFixed(2) : 0;
 
             document.getElementById('res-totalA').innerText = '¥' + totalAmount.toLocaleString(undefined, {minimumFractionDigits:2});
             document.getElementById('res-avgP').innerText = avgCost.toFixed(4);
             
             const lossEl = document.getElementById('res-loss');
             const percEl = document.getElementById('res-percent');
+            const color = totalLoss >= 0 ? 'var(--ios-red)' : 'var(--ios-green)';
             
-            const color = loss >= 0 ? 'var(--ios-red)' : 'var(--ios-green)';
             lossEl.style.color = percEl.style.color = color;
-            
-            lossEl.innerText = (loss >= 0 ? '+' : '') + loss.toFixed(2);
-            percEl.innerText = (loss >= 0 ? '+' : '') + lossPercent + '%';
+            lossEl.innerText = (totalLoss >= 0 ? '+' : '') + totalLoss.toFixed(2);
+            percEl.innerText = (totalLoss >= 0 ? '+' : '') + totalLossPercent + '%';
             
             const needEl = document.getElementById('res-need');
             needEl.innerText = needRise + '%';
@@ -207,7 +237,10 @@
                     <input type="number" class="amt" placeholder="0" value="${defaultAmt}" oninput="calculate()">
                 </div>
                 <div class="row">
-                    <span class="row-label">成交单价</span>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span class="row-label" style="margin-left:0;">成交单价</span>
+                        <span class="single-res" style="opacity:0;">0%</span>
+                    </div>
                     <input type="number" class="pri" placeholder="0.000" value="${defaultPri}" oninput="calculate()">
                 </div>
             `;
@@ -223,9 +256,7 @@
             }
         }
 
-        window.onload = () => {
-            addRecord(10000, 1.000);
-        };
+        window.onload = () => addRecord(10000, 1.000);
     </script>
 </body>
 </html>
