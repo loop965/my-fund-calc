@@ -25,9 +25,9 @@
             color: #1C1C1E;
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start; /* 改为从顶部开始，配合 padding */
             min-height: 100vh;
-            padding: 20px;
+            padding: 10px 20px 40px; /* 显著减小顶部内边距 */
         }
 
         .container {
@@ -35,11 +35,12 @@
             max-width: 400px;
             background: var(--ios-card);
             border-radius: 30px;
-            padding: 30px 24px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.06);
+            padding: 24px 24px; /* 减小内边距 */
+            margin-top: 10px; /* 减小外边距 */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
         }
 
-        h1 { font-size: 22px; font-weight: 800; margin: 0 0 20px; text-align: left; }
+        h1 { font-size: 22px; font-weight: 800; margin: 0 0 18px; text-align: left; }
 
         .input-grid {
             display: grid;
@@ -62,15 +63,14 @@
             width: 100%;
         }
 
-        /* 浅橙色记录区 */
         .record-section {
             background: #FFF9F2;
             border-radius: 18px;
             padding: 15px;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
 
-        .orange-label { color: var(--ios-orange); font-size: 12px; font-weight: 700; margin-bottom: 10px; display: block; }
+        .orange-label { color: var(--ios-orange); font-size: 12px; font-weight: 700; margin-bottom: 8px; display: block; }
 
         .record-card {
             background: white;
@@ -108,7 +108,6 @@
             margin-top: 4px;
         }
 
-        /* 结果面板 */
         .res-panel { margin-top: 5px; border-top: 1px solid #F2F2F7; padding-top: 12px; }
         .res-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 14px; }
         .res-row b { font-variant-numeric: tabular-nums; font-weight: 700; }
@@ -146,7 +145,6 @@
             <button class="btn-add-outline" onclick="addRecord()">+ 添加成交记录</button>
         </div>
 
-        <!-- 结果面板实时显示，不再需要生成按钮 -->
         <div class="res-panel">
             <div class="res-row"><span>总投入成本</span><b id="res-totalA">¥0.00</b></div>
             <div class="res-row"><span>平均持仓成本</span><b id="res-avgP" style="color:var(--ios-blue)">0.0000</b></div>
@@ -172,7 +170,6 @@
                 if (amt > 0 && pri > 0) { lastPrice = pri; }
             });
 
-            // 自动同步最后一个成交价到市场价（若非手动修改）
             if (!isManualPrice && lastPrice !== null) {
                 document.getElementById('currentPrice').value = lastPrice.toFixed(4);
             }
