@@ -5,13 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>投资助手</title>
     
-    <!-- PWA & iOS 配置 -->
     <link rel="manifest" href="manifest.json">
-	<link rel="apple-touch-icon" href="icon.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="投资助手">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com">
 
     <style>
         :root {
@@ -43,6 +40,8 @@
             -webkit-tap-highlight-color: transparent;
             box-sizing: border-box;
             -webkit-user-select: none;
+            /* 关键：消除点击延迟 */
+            touch-action: manipulation;
         }
 
         html, body {
@@ -50,6 +49,20 @@
             background-color: var(--bg-color);
             margin: 0;
             padding: 0;
+            /* 页面入场动画 */
+            animation: pageIn 0.4s cubic-bezier(0.1, 0.7, 0.1, 1);
+        }
+
+        @keyframes pageIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 离开时的渐隐动画（配合脚本触发） */
+        .page-exit {
+            opacity: 0;
+            transform: scale(0.98);
+            transition: 0.2s ease-out;
         }
 
         body {
@@ -86,7 +99,7 @@
 
         .header-text p {
             color: var(--text-secondary);
-            font-size: 12px;
+            font-size: 11px;
             margin: 4px 0 0;
             text-transform: uppercase;
             letter-spacing: 1.2px;
@@ -103,9 +116,9 @@
             justify-content: center;
             font-size: 18px;
             cursor: pointer;
-            transition: transform 0.2s cubic-bezier(0.1, 0.7, 0.1, 1);
+            transition: transform 0.2s;
         }
-        .theme-btn:active { transform: scale(0.9); }
+        .theme-btn:active { transform: scale(0.85); }
 
         /* 分组样式 */
         .section-header {
@@ -113,7 +126,6 @@
             color: var(--text-secondary);
             font-size: 13px;
             font-weight: 500;
-            text-transform: uppercase;
         }
 
         .menu-group {
@@ -131,7 +143,8 @@
             display: flex;
             align-items: center;
             gap: 14px;
-            transition: background-color 0.2s;
+            /* 丝滑过渡关键 */
+            transition: background-color 0.2s, transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
         }
 
@@ -145,7 +158,11 @@
             background: var(--ios-sep);
         }
 
-        .menu-card:active { background-color: var(--group-bg); }
+        /* 仿原生触压效果 */
+        .menu-card:active { 
+            background-color: var(--group-bg);
+            transform: scale(0.97); /* 按压缩小 */
+        }
 
         .card-icon {
             width: 48px;
@@ -184,7 +201,7 @@
 </head>
 <body>
 
-    <div class="container">
+    <div id="app" class="container">
         <div class="header-wrapper">
             <div class="header-text">
                 <h1>投资助手</h1>
@@ -270,17 +287,36 @@
             localStorage.setItem('theme', newTheme);
         }
 
+        // --- 核心优化：处理丝滑跳转 ---
+        document.addEventListener('click', function(e) {
+            let target = e.target;
+            while (target && target.tagName !== 'A') {
+                target = target.parentNode;
+            }
+            
+            if (target && target.getAttribute('href') && target.hostname === window.location.hostname) {
+                // 排除带有 target="_blank" 的链接
+                if (target.target === '_blank') return;
+
+                e.preventDefault();
+                const href = target.getAttribute('href');
+                
+                // 执行一个简单的退出动画效果
+                document.getElementById('app').classList.add('page-exit');
+                
+                // 延迟一小会儿跳转，让用户看到按压反馈
+                setTimeout(() => {
+                    window.location.href = href;
+                }, 150);
+            }
+        }, false);
+
         // 初始化
         (function() {
             const saved = localStorage.getItem('theme');
             const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
             updateUI(saved || (systemDark ? 'dark' : 'light'));
         })();
-
-        // 监听系统变化
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-            if(!localStorage.getItem('theme')) updateUI(e.matches ? 'dark' : 'light');
-        });
     </script>
 </body>
 </html>
