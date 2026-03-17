@@ -2,15 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-	<!-- 关联刚才创建的清单 -->
-	<link rel="manifest" href="manifest.json">
-	
-	<!-- iOS 专用配置：隐藏 Safari 地址栏和状态栏 -->
-	<meta name="apple-mobile-web-app-capable" content="yes">
-	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-	<meta name="apple-mobile-web-app-title" content="回撤计算">
-	<!-- viewport-fit=cover 是消除顶部黑边的核心 -->
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Drawdown Calculator</title>
     <style>
         :root {
@@ -44,7 +36,8 @@
             justify-content: center;
             align-items: flex-start; 
             height: 100vh;
-            padding-top: 5vh;
+            /* 调整此处数值控制距离顶部的距离，12vh 约为屏幕顶部的 12% 位置 */
+            padding-top: 12vh; 
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
         }
@@ -55,7 +48,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
             padding: 0 4px;
         }
 
@@ -67,7 +60,7 @@
             color: var(--ios-primary);
             background-color: var(--ios-btn-bg);
             border: none;
-            padding: 6px 14px;
+            padding: 8px 16px;
             border-radius: 20px;
             cursor: pointer;
             transition: all 0.2s;
@@ -77,7 +70,7 @@
 
         .card {
             background: var(--ios-card);
-            border-radius: 12px;
+            border-radius: 14px;
             padding: 0 16px;
             box-shadow: 0 1px 2px rgba(0,0,0,0.04);
         }
@@ -85,14 +78,13 @@
         .input-item {
             display: flex;
             align-items: center;
-            padding: 14px 0;
+            padding: 16px 0;
             border-bottom: 0.5px solid var(--ios-border);
         }
         .input-item:last-child { border-bottom: none; }
 
         .label { font-size: 17px; width: 100px; }
         
-        /* 改为 text 类型并优化样式 */
         input {
             flex: 1;
             background: transparent;
@@ -106,19 +98,19 @@
 
         .unit { color: var(--ios-secondary-text); font-size: 17px; margin-left: 6px; width: 20px; }
 
-        .result-section { margin-top: 28px; }
+        .result-section { margin-top: 32px; }
 
         .result-group {
             background: var(--ios-card);
-            border-radius: 12px;
-            padding: 24px 16px;
+            border-radius: 14px;
+            padding: 28px 16px;
             text-align: center;
             box-shadow: 0 1px 2px rgba(0,0,0,0.04);
         }
 
-        .res-label { font-size: 13px; color: var(--ios-secondary-text); letter-spacing: 0.5px; margin-bottom: 8px; display: block; }
-        .res-value { font-size: 40px; font-weight: 800; margin: 4px 0; }
-        .res-sub { font-size: 14px; margin-top: 10px; font-weight: 500; opacity: 0.9; }
+        .res-label { font-size: 13px; color: var(--ios-secondary-text); letter-spacing: 0.5px; margin-bottom: 10px; display: block; }
+        .res-value { font-size: 44px; font-weight: 800; margin: 4px 0; letter-spacing: -1px; }
+        .res-sub { font-size: 14px; margin-top: 12px; font-weight: 500; opacity: 0.9; }
     </style>
 </head>
 <body>
@@ -126,13 +118,12 @@
 <div class="container">
     <div class="header">
         <h1>回撤计算</h1>
-        <button class="clear-btn" onclick="clearAll()">清除</button>
+        <button class="clear-btn" onclick="clearAll()">清除内容</button>
     </div>
     
     <div class="card">
         <div class="input-item">
             <span class="label">前次高点</span>
-            <!-- 使用 type="text" 并指定 inputmode 以支持负号 -->
             <input type="text" id="highVal" placeholder="0.00" inputmode="text" oninput="validateAndCalc(this)">
             <span class="unit">%</span>
         </div>
@@ -153,15 +144,12 @@
 </div>
 
 <script>
-    // 限制只能输入数字、小数点和开头的负号
     function validateAndCalc(el) {
         let val = el.value;
-        // 允许开头输入负号，后面只能是数字或一个小数点
-        val = val.replace(/[^\d.-]/g, ""); // 去除非数字、点、负号
-        if (val.indexOf('-') > 0) val = val.replace('-', ''); // 负号不在开头则去掉
+        val = val.replace(/[^\d.-]/g, ""); 
+        if (val.indexOf('-') > 0) val = val.replace('-', ''); 
         const dots = val.split('.');
-        if (dots.length > 2) val = dots[0] + '.' + dots.slice(1).join(''); // 只保留第一个点
-        
+        if (dots.length > 2) val = dots[0] + '.' + dots.slice(1).join(''); 
         el.value = val;
         calculate();
     }
@@ -170,7 +158,6 @@
         const hStr = document.getElementById('highVal').value;
         const cStr = document.getElementById('currentVal').value;
         
-        // 只有当两个都是有效数值时才计算
         if (hStr === "" || cStr === "" || hStr === "-" || cStr === "-") {
             resetDisplay();
             return;
@@ -184,8 +171,6 @@
 
         const diffPoints = (c - h).toFixed(2);
         
-        // 核心公式：回撤/增长 = (当前净值 - 高点净值) / 高点净值
-        // 净值 = 1 + (收益率/100)
         const highNet = 1 + (h / 100);
         const currNet = 1 + (c / 100);
         
