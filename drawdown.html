@@ -10,11 +10,12 @@
             --ios-card: #ffffff;
             --ios-primary: #007aff;
             --ios-up: #ff3b30;    /* 涨红 */
+            --ios-up-bg: rgba(255, 59, 48, 0.1);
             --ios-down: #34c759;  /* 跌绿 */
+            --ios-down-bg: rgba(52, 199, 89, 0.1);
             --ios-text: #000000;
             --ios-secondary-text: #8e8e93;
             --ios-border: #d1d1d6;
-            --ios-btn-bg: rgba(0, 122, 255, 0.1);
         }
 
         @media (prefers-color-scheme: dark) {
@@ -23,7 +24,8 @@
                 --ios-card: #1c1c1e;
                 --ios-text: #ffffff;
                 --ios-border: #38383a;
-                --ios-btn-bg: rgba(10, 132, 255, 0.15);
+                --ios-up-bg: rgba(255, 69, 58, 0.15);
+                --ios-down-bg: rgba(48, 209, 88, 0.15);
             }
         }
 
@@ -32,42 +34,42 @@
             background-color: var(--ios-bg);
             color: var(--ios-text);
             margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start; 
-            height: 100vh;
-            /* 调整此处数值控制距离顶部的距离，12vh 约为屏幕顶部的 12% 位置 */
-            padding-top: 12vh; 
-            box-sizing: border-box;
+            display: flex; justify-content: center; align-items: flex-start; 
+            height: 100vh; padding-top: 8vh; box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
         }
 
         .container { width: 92%; max-width: 400px; }
 
         .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-            padding: 0 4px;
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px; padding: 0 4px;
         }
 
         h1 { font-size: 28px; font-weight: 700; margin: 0; letter-spacing: -0.5px; }
         
         .clear-btn {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--ios-primary);
-            background-color: var(--ios-btn-bg);
-            border: none;
-            padding: 8px 16px;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: all 0.2s;
+            font-size: 14px; font-weight: 600; color: var(--ios-primary);
+            background: rgba(0, 122, 255, 0.1); border: none;
+            padding: 8px 16px; border-radius: 20px; cursor: pointer;
         }
 
-        .clear-btn:active { transform: scale(0.92); background-color: rgba(0, 122, 255, 0.25); }
+        /* 结果区域 - 背景色动态变化 */
+        .result-group {
+            background: var(--ios-card);
+            border-radius: 16px;
+            padding: 28px 16px;
+            text-align: center;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); /* 平滑过渡 */
+        }
 
+        .res-label { font-size: 13px; color: var(--ios-secondary-text); letter-spacing: 0.5px; margin-bottom: 8px; display: block; }
+        .res-value { font-size: 48px; font-weight: 800; margin: 4px 0; letter-spacing: -1.5px; }
+        .res-sub { font-size: 14px; margin-top: 10px; font-weight: 500; }
+
+        /* 输入区域 */
         .card {
             background: var(--ios-card);
             border-radius: 14px;
@@ -76,41 +78,17 @@
         }
 
         .input-item {
-            display: flex;
-            align-items: center;
-            padding: 16px 0;
+            display: flex; align-items: center; padding: 16px 0;
             border-bottom: 0.5px solid var(--ios-border);
         }
         .input-item:last-child { border-bottom: none; }
 
         .label { font-size: 17px; width: 100px; }
-        
         input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            color: var(--ios-text);
-            font-size: 17px;
-            text-align: right;
-            outline: none;
-            font-family: inherit;
+            flex: 1; background: transparent; border: none; color: var(--ios-text);
+            font-size: 17px; text-align: right; outline: none;
         }
-
         .unit { color: var(--ios-secondary-text); font-size: 17px; margin-left: 6px; width: 20px; }
-
-        .result-section { margin-top: 32px; }
-
-        .result-group {
-            background: var(--ios-card);
-            border-radius: 14px;
-            padding: 28px 16px;
-            text-align: center;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-        }
-
-        .res-label { font-size: 13px; color: var(--ios-secondary-text); letter-spacing: 0.5px; margin-bottom: 10px; display: block; }
-        .res-value { font-size: 44px; font-weight: 800; margin: 4px 0; letter-spacing: -1px; }
-        .res-sub { font-size: 14px; margin-top: 12px; font-weight: 500; opacity: 0.9; }
     </style>
 </head>
 <body>
@@ -118,7 +96,13 @@
 <div class="container">
     <div class="header">
         <h1>回撤计算</h1>
-        <button class="clear-btn" onclick="clearAll()">清除内容</button>
+        <button class="clear-btn" onclick="clearAll()">清除</button>
+    </div>
+
+    <div class="result-group" id="resultCard">
+        <span class="res-label" id="typeLabel">资产状态</span>
+        <div class="res-value" id="mainResult">0.00%</div>
+        <div class="res-sub" id="subResult">请输入数值</div>
     </div>
     
     <div class="card">
@@ -133,14 +117,6 @@
             <span class="unit">%</span>
         </div>
     </div>
-
-    <div class="result-section">
-        <div class="result-group">
-            <span class="res-label" id="typeLabel">资产状态</span>
-            <div class="res-value" id="mainResult">0.00%</div>
-            <div class="res-sub" id="subResult">请输入数值开始计算</div>
-        </div>
-    </div>
 </div>
 
 <script>
@@ -149,7 +125,7 @@
         val = val.replace(/[^\d.-]/g, ""); 
         if (val.indexOf('-') > 0) val = val.replace('-', ''); 
         const dots = val.split('.');
-        if (dots.length > 2) val = dots[0] + '.' + dots.slice(1).join(''); 
+        if (dots.length > 2) val = dots + '.' + dots.slice(1).join(''); 
         el.value = val;
         calculate();
     }
@@ -157,7 +133,11 @@
     function calculate() {
         const hStr = document.getElementById('highVal').value;
         const cStr = document.getElementById('currentVal').value;
-        
+        const cardEl = document.getElementById('resultCard');
+        const mainEl = document.getElementById('mainResult');
+        const subEl = document.getElementById('subResult');
+        const labelEl = document.getElementById('typeLabel');
+
         if (hStr === "" || cStr === "" || hStr === "-" || cStr === "-") {
             resetDisplay();
             return;
@@ -165,16 +145,13 @@
 
         const h = parseFloat(hStr);
         const c = parseFloat(cStr);
-        const mainEl = document.getElementById('mainResult');
-        const subEl = document.getElementById('subResult');
-        const labelEl = document.getElementById('typeLabel');
-
         const diffPoints = (c - h).toFixed(2);
-        
         const highNet = 1 + (h / 100);
         const currNet = 1 + (c / 100);
         
         if (currNet >= highNet) {
+            // 增长状态：背景变红
+            cardEl.style.backgroundColor = "var(--ios-up-bg)";
             labelEl.innerText = "资产增长率";
             const growth = ((currNet - highNet) / highNet * 100).toFixed(2);
             mainEl.innerText = "+" + growth + "%";
@@ -182,6 +159,8 @@
             subEl.innerText = "📈 较前高上涨 " + Math.abs(diffPoints) + " 个百分点";
             subEl.style.color = "var(--ios-up)";
         } else {
+            // 回撤状态：背景变绿
+            cardEl.style.backgroundColor = "var(--ios-down-bg)";
             labelEl.innerText = "实际回撤率";
             const drawdown = ((highNet - currNet) / highNet * 100).toFixed(2);
             mainEl.innerText = "-" + drawdown + "%";
@@ -198,11 +177,13 @@
     }
 
     function resetDisplay() {
+        const cardEl = document.getElementById('resultCard');
         const mainEl = document.getElementById('mainResult');
         const subEl = document.getElementById('subResult');
+        cardEl.style.backgroundColor = "var(--ios-card)";
         mainEl.innerText = "0.00%";
         mainEl.style.color = "var(--ios-text)";
-        subEl.innerText = "请输入数值开始计算";
+        subEl.innerText = "请输入数值";
         subEl.style.color = "var(--ios-secondary-text)";
         document.getElementById('typeLabel').innerText = "资产状态";
     }
