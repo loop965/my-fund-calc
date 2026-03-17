@@ -9,6 +9,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="投资助手">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com">
 
     <style>
         :root {
@@ -39,34 +40,25 @@
         * {
             -webkit-tap-highlight-color: transparent;
             box-sizing: border-box;
-            -webkit-user-select: none;
-            /* 关键：消除点击延迟 */
+            /* 消除点击延迟 */
             touch-action: manipulation;
         }
 
         html, body {
-            overscroll-behavior-y: none;
             background-color: var(--bg-color);
             margin: 0;
             padding: 0;
-            /* 页面入场动画 */
-            animation: pageIn 0.4s cubic-bezier(0.1, 0.7, 0.1, 1);
+            /* 关键：forwards 确保动画结束后不消失 */
+            animation: pageIn 0.4s cubic-bezier(0.1, 0.7, 0.1, 1) forwards;
         }
 
         @keyframes pageIn {
-            from { opacity: 0; transform: translateY(10px); }
+            from { opacity: 0; transform: translateY(8px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* 离开时的渐隐动画（配合脚本触发） */
-        .page-exit {
-            opacity: 0;
-            transform: scale(0.98);
-            transition: 0.2s ease-out;
-        }
-
         body {
-            font-family: -apple-system, "SF Pro Display", "SF Pro Text", "PingFang SC", sans-serif;
+            font-family: -apple-system, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -81,7 +73,7 @@
             padding-bottom: 40px;
         }
 
-        /* 头部样式 */
+        /* 头部 */
         .header-wrapper {
             padding: 30px 20px 10px;
             display: flex;
@@ -106,21 +98,7 @@
             font-weight: 600;
         }
 
-        .theme-btn {
-            background: var(--group-bg);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-        .theme-btn:active { transform: scale(0.85); }
-
-        /* 分组样式 */
+        /* 菜单组 */
         .section-header {
             padding: 20px 20px 8px 32px;
             color: var(--text-secondary);
@@ -133,7 +111,7 @@
             background: var(--card-bg);
             border-radius: var(--card-radius);
             overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+            box-shadow: 0 0 0 0.5px rgba(0,0,0,0.05);
         }
 
         .menu-card {
@@ -143,35 +121,26 @@
             display: flex;
             align-items: center;
             gap: 14px;
-            /* 丝滑过渡关键 */
-            transition: background-color 0.2s, transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
+            transition: background-color 0.2s, transform 0.1s;
         }
 
-        .menu-card:not(:last-child)::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 78px;
-            right: 0;
-            height: 0.5px;
-            background: var(--ios-sep);
-        }
-
-        /* 仿原生触压效果 */
-        .menu-card:active { 
+        .menu-card:active {
             background-color: var(--group-bg);
-            transform: scale(0.97); /* 按压缩小 */
+            transform: scale(0.97); /* 按压反馈 */
+        }
+
+        .menu-card:not(:last-child) {
+            border-bottom: 0.5px solid var(--ios-sep);
         }
 
         .card-icon {
-            width: 48px;
-            height: 48px;
+            width: 44px;
+            height: 44px;
             border-radius: var(--icon-radius);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
+            font-size: 22px;
             flex-shrink: 0;
         }
 
@@ -181,22 +150,25 @@
             font-size: 17px;
             font-weight: 600;
             color: var(--text-main);
-            margin-bottom: 2px;
         }
         .card-sub {
             display: block;
             font-size: 13px;
             color: var(--text-secondary);
-            line-height: 1.3;
         }
 
-        .arrow {
-            color: var(--text-tertiary);
-            font-size: 20px;
-            font-weight: 300;
-        }
+        .arrow { color: var(--text-tertiary); font-size: 18px; }
 
-        .bottom-spacer { height: 40px; }
+        .theme-btn {
+            background: var(--group-bg);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
     </style>
 </head>
 <body>
@@ -216,7 +188,7 @@
                 <div class="card-icon" style="background: linear-gradient(135deg, #007AFF, #5856D6);">💰</div>
                 <div class="card-content">
                     <span class="card-title">总资产概览</span>
-                    <span class="card-sub">管理持仓本金，查看实时盈亏明细</span>
+                    <span class="card-sub">管理持仓本金与盈亏明细</span>
                 </div>
                 <span class="arrow">›</span>
             </a>
@@ -225,54 +197,27 @@
                 <div class="card-icon" style="background: linear-gradient(135deg, #AF52DE, #FF375F);">📝</div>
                 <div class="card-content">
                     <span class="card-title">理财记录</span>
-                    <span class="card-sub">追踪每一笔买入卖出，复盘投资决策</span>
-                </div>
-                <span class="arrow">›</span>
-            </a>
-
-            <a href="ledger.html" class="menu-card">
-                <div class="card-icon" style="background: linear-gradient(135deg, #5AC8FA, #007AFF);">📅</div>
-                <div class="card-content">
-                    <span class="card-title">日常随手记</span>
-                    <span class="card-sub">记录日常收支，自动归类资金流向</span>
+                    <span class="card-sub">追踪每一笔投资决策</span>
                 </div>
                 <span class="arrow">›</span>
             </a>
         </div>
 
-        <div class="section-header">分析与计划</div>
+        <div class="section-header">工具</div>
         <div class="menu-group">
             <a href="calculate.html" class="menu-card">
                 <div class="card-icon" style="background: linear-gradient(135deg, #64D2FF, #5AC8FA);">📈</div>
                 <div class="card-content">
                     <span class="card-title">加仓计算</span>
-                    <span class="card-sub">输入目标成本，精确计算所需补仓金额</span>
-                </div>
-                <span class="arrow">›</span>
-            </a>
-            <a href="plan.html" class="menu-card">
-                <div class="card-icon" style="background: linear-gradient(135deg, #FF9F0A, #FFD60A);">📊</div>
-                <div class="card-content">
-                    <span class="card-title">基金加仓计划</span>
-                    <span class="card-sub">模拟成本价下跌路径，生成分批方案</span>
-                </div>
-                <span class="arrow">›</span>
-            </a>
-
-            <a href="profit.html" class="menu-card">
-                <div class="card-icon" style="background: linear-gradient(135deg, #30D158, #66D42A);">💵</div>
-                <div class="card-content">
-                    <span class="card-title">盈利预演</span>
-                    <span class="card-sub">计算分批止盈路径，实现收益最大化</span>
+                    <span class="card-sub">计算目标成本所需金额</span>
                 </div>
                 <span class="arrow">›</span>
             </a>
         </div>
-
-        <div class="bottom-spacer"></div>
     </div>
 
     <script>
+        // 主题切换逻辑
         const html = document.documentElement;
         const modeBtn = document.getElementById('modeBtn');
 
@@ -287,29 +232,19 @@
             localStorage.setItem('theme', newTheme);
         }
 
-        // --- 核心优化：处理丝滑跳转 ---
-        document.addEventListener('click', function(e) {
-            let target = e.target;
-            while (target && target.tagName !== 'A') {
-                target = target.parentNode;
+        // --- 核心修复：处理滑动返回白屏 ---
+        window.addEventListener('pageshow', function(event) {
+            // 如果是从缓存加载（即滑动返回）
+            if (event.persisted) {
+                const body = document.body;
+                // 强制重置透明度，防止卡在 pageIn 动画的 0% 状态
+                body.style.opacity = '1';
+                // 简单触发一次重绘
+                body.style.display = 'none';
+                body.offsetHeight; 
+                body.style.display = 'block';
             }
-            
-            if (target && target.getAttribute('href') && target.hostname === window.location.hostname) {
-                // 排除带有 target="_blank" 的链接
-                if (target.target === '_blank') return;
-
-                e.preventDefault();
-                const href = target.getAttribute('href');
-                
-                // 执行一个简单的退出动画效果
-                document.getElementById('app').classList.add('page-exit');
-                
-                // 延迟一小会儿跳转，让用户看到按压反馈
-                setTimeout(() => {
-                    window.location.href = href;
-                }, 150);
-            }
-        }, false);
+        });
 
         // 初始化
         (function() {
