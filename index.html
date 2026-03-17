@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>投资助手</title>
     
+    <!-- PWA & iOS 配置 -->
     <link rel="manifest" href="manifest.json">
+	<link rel="apple-touch-icon" href="icon.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="投资助手">
@@ -37,71 +39,152 @@
             --ios-sep: #38383A;
         }
 
-        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; touch-action: manipulation; }
-
-        html, body {
-            background-color: var(--bg-color);
-            margin: 0; padding: 0;
-            /* 解决动画结束后可能闪现白屏的问题 */
-            animation: pageIn 0.4s cubic-bezier(0.1, 0.7, 0.1, 1) forwards;
+        * {
+            -webkit-tap-highlight-color: transparent;
+            box-sizing: border-box;
+            -webkit-user-select: none;
         }
 
-        @keyframes pageIn {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
+        html, body {
+            overscroll-behavior-y: none;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
         }
 
         body {
-            font-family: -apple-system, "SF Pro Display", sans-serif;
-            display: flex; flex-direction: column; align-items: center;
+            font-family: -apple-system, "SF Pro Display", "SF Pro Text", "PingFang SC", sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             min-height: 100vh;
             padding-top: env(safe-area-inset-top);
             padding-bottom: env(safe-area-inset-bottom);
         }
 
-        .container { width: 100%; max-width: 500px; padding-bottom: 40px; }
-
-        .header-wrapper {
-            padding: 30px 20px 10px;
-            display: flex; justify-content: space-between; align-items: flex-end;
+        .container {
+            width: 100%;
+            max-width: 500px;
+            padding-bottom: 40px;
         }
 
-        .header-text h1 { font-size: 34px; font-weight: var(--title-weight); margin: 0; letter-spacing: -1px; color: var(--text-main); }
-        .header-text p { color: var(--text-secondary); font-size: 11px; margin: 4px 0 0; text-transform: uppercase; letter-spacing: 1.2px; font-weight: 600; }
+        /* 头部样式 */
+        .header-wrapper {
+            padding: 30px 20px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
 
-        .section-header { padding: 20px 20px 8px 32px; color: var(--text-secondary); font-size: 13px; font-weight: 500; }
+        .header-text h1 {
+            font-size: 34px;
+            font-weight: var(--title-weight);
+            margin: 0;
+            letter-spacing: -1px;
+            color: var(--text-main);
+        }
+
+        .header-text p {
+            color: var(--text-secondary);
+            font-size: 12px;
+            margin: 4px 0 0;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            font-weight: 600;
+        }
+
+        .theme-btn {
+            background: var(--group-bg);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            cursor: pointer;
+            transition: transform 0.2s cubic-bezier(0.1, 0.7, 0.1, 1);
+        }
+        .theme-btn:active { transform: scale(0.9); }
+
+        /* 分组样式 */
+        .section-header {
+            padding: 20px 20px 8px 32px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
 
         .menu-group {
             margin: 0 16px 20px;
             background: var(--card-bg);
             border-radius: var(--card-radius);
             overflow: hidden;
-            box-shadow: 0 0 0 0.5px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
         }
 
         .menu-card {
             padding: 14px 16px;
             text-decoration: none;
             color: inherit;
-            display: flex; align-items: center; gap: 14px;
-            transition: background-color 0.1s;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            transition: background-color 0.2s;
+            position: relative;
         }
 
-        .menu-card:active { background-color: var(--group-bg); transform: scale(0.99); }
-        .menu-card:not(:last-child) { border-bottom: 0.5px solid var(--ios-sep); }
+        .menu-card:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 78px;
+            right: 0;
+            height: 0.5px;
+            background: var(--ios-sep);
+        }
 
-        .card-icon { width: 44px; height: 44px; border-radius: var(--icon-radius); display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+        .menu-card:active { background-color: var(--group-bg); }
+
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--icon-radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
         .card-content { flex: 1; }
-        .card-title { display: block; font-size: 17px; font-weight: 600; color: var(--text-main); }
-        .card-sub { display: block; font-size: 13px; color: var(--text-secondary); }
-        .arrow { color: var(--text-tertiary); font-size: 18px; }
+        .card-title {
+            display: block;
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 2px;
+        }
+        .card-sub {
+            display: block;
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.3;
+        }
 
-        .theme-btn { background: var(--group-bg); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+        .arrow {
+            color: var(--text-tertiary);
+            font-size: 20px;
+            font-weight: 300;
+        }
+
+        .bottom-spacer { height: 40px; }
     </style>
 </head>
 <body>
 
-    <div id="app" class="container">
+    <div class="container">
         <div class="header-wrapper">
             <div class="header-text">
                 <h1>投资助手</h1>
@@ -116,7 +199,7 @@
                 <div class="card-icon" style="background: linear-gradient(135deg, #007AFF, #5856D6);">💰</div>
                 <div class="card-content">
                     <span class="card-title">总资产概览</span>
-                    <span class="card-sub">管理持仓本金与盈亏明细</span>
+                    <span class="card-sub">管理持仓本金，查看实时盈亏明细</span>
                 </div>
                 <span class="arrow">›</span>
             </a>
@@ -125,37 +208,36 @@
                 <div class="card-icon" style="background: linear-gradient(135deg, #AF52DE, #FF375F);">📝</div>
                 <div class="card-content">
                     <span class="card-title">理财记录</span>
-                    <span class="card-sub">追踪每日收益与投资决策</span>
+                    <span class="card-sub">追踪每一笔买入卖出，复盘投资决策</span>
                 </div>
                 <span class="arrow">›</span>
             </a>
-            
-            <a href="distribution.html" class="menu-card">
-                <div class="card-icon" style="background: linear-gradient(135deg, #FF9500, #FFCC00);">📊</div>
+
+            <a href="ledger.html" class="menu-card">
+                <div class="card-icon" style="background: linear-gradient(135deg, #5AC8FA, #007AFF);">📅</div>
                 <div class="card-content">
-                    <span class="card-title">投资成本分布</span>
-                    <span class="card-sub">分析各品类投资占比情况</span>
+                    <span class="card-title">日常随手记</span>
+                    <span class="card-sub">记录日常收支，自动归类资金流向</span>
                 </div>
                 <span class="arrow">›</span>
             </a>
         </div>
 
-        <div class="section-header">工具与演练</div>
+        <div class="section-header">分析与计划</div>
         <div class="menu-group">
             <a href="calculate.html" class="menu-card">
-                <div class="card-icon" style="background: linear-gradient(135deg, #5AC8FA, #64D2FF);">📈</div>
+                <div class="card-icon" style="background: linear-gradient(135deg, #64D2FF, #5AC8FA);">📈</div>
                 <div class="card-content">
                     <span class="card-title">加仓计算</span>
-                    <span class="card-sub">计算目标成本所需金额</span>
+                    <span class="card-sub">输入目标成本，精确计算所需补仓金额</span>
                 </div>
                 <span class="arrow">›</span>
             </a>
-
-            <a href="fund_cost.html" class="menu-card">
-                <div class="card-icon" style="background: linear-gradient(135deg, #5856D6, #007AFF);">🧪</div>
+            <a href="plan.html" class="menu-card">
+                <div class="card-icon" style="background: linear-gradient(135deg, #FF9F0A, #FFD60A);">📊</div>
                 <div class="card-content">
-                    <span class="card-title">基金成本预演</span>
-                    <span class="card-sub">模拟不同净值下的持仓变化</span>
+                    <span class="card-title">基金加仓计划</span>
+                    <span class="card-sub">模拟成本价下跌路径，生成分批方案</span>
                 </div>
                 <span class="arrow">›</span>
             </a>
@@ -164,11 +246,13 @@
                 <div class="card-icon" style="background: linear-gradient(135deg, #30D158, #66D42A);">💵</div>
                 <div class="card-content">
                     <span class="card-title">盈利预演</span>
-                    <span class="card-sub">计算分批止盈路径与预期收益</span>
+                    <span class="card-sub">计算分批止盈路径，实现收益最大化</span>
                 </div>
                 <span class="arrow">›</span>
             </a>
         </div>
+
+        <div class="bottom-spacer"></div>
     </div>
 
     <script>
@@ -186,22 +270,17 @@
             localStorage.setItem('theme', newTheme);
         }
 
-        // 核心修复：针对 iOS 滑动手势返回导致动画状态锁死（白屏）的补丁
-        window.addEventListener('pageshow', function(event) {
-            if (event.persisted) {
-                // 如果是从缓存恢复，强制重置透明度和触发重绘
-                document.body.style.opacity = '1';
-                document.body.style.display = 'none';
-                document.body.offsetHeight; 
-                document.body.style.display = 'block';
-            }
-        });
-
+        // 初始化
         (function() {
             const saved = localStorage.getItem('theme');
             const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
             updateUI(saved || (systemDark ? 'dark' : 'light'));
         })();
+
+        // 监听系统变化
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+            if(!localStorage.getItem('theme')) updateUI(e.matches ? 'dark' : 'light');
+        });
     </script>
 </body>
 </html>
