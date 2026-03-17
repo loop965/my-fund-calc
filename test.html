@@ -3,15 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>回撤计算</title>
+    <title>回撤计算器</title>
     <style>
         :root {
             --ios-bg: #f2f2f7;
             --ios-card: #ffffff;
             --ios-primary: #007aff;
+            --ios-up: #ff3b30;    /* 涨红 */
+            --ios-down: #34c759;  /* 跌绿 */
             --ios-text: #000000;
             --ios-secondary-text: #8e8e93;
             --ios-border: #d1d1d6;
+            --ios-btn-bg: rgba(0, 122, 255, 0.1); /* 浅蓝色背景 */
         }
 
         @media (prefers-color-scheme: dark) {
@@ -19,61 +22,71 @@
                 --ios-bg: #000000;
                 --ios-card: #1c1c1e;
                 --ios-text: #ffffff;
-                --ios-secondary-text: #8e8e93;
                 --ios-border: #38383a;
+                --ios-btn-bg: rgba(10, 132, 255, 0.15);
             }
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
             background-color: var(--ios-bg);
             color: var(--ios-text);
             margin: 0;
             display: flex;
             justify-content: center;
-            /* 改为靠上对齐 */
             align-items: flex-start; 
             height: 100vh;
-            /* 设置顶部留白，约为屏幕高度的 8% */
-            padding-top: 8vh; 
+            padding-top: 5vh;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        .container {
-            width: 92%;
-            max-width: 400px;
+        .container { width: 92%; max-width: 400px; }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 0 4px;
         }
 
-        h1 {
-            font-size: 28px;
-            font-weight: 700;
-            margin: 0 0 20px 10px; /* 标题靠左对齐，符合 iOS 17 大标题风格 */
-            letter-spacing: -0.5px;
+        h1 { font-size: 28px; font-weight: 700; margin: 0; letter-spacing: -0.5px; }
+        
+        /* 优化后的胶囊清除按钮 */
+        .clear-btn {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--ios-primary);
+            background-color: var(--ios-btn-bg);
+            border: none;
+            padding: 6px 14px;
+            border-radius: 20px; /* 胶囊状 */
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .clear-btn:active {
+            transform: scale(0.92); /* 点击缩放反馈 */
+            background-color: rgba(0, 122, 255, 0.25);
         }
 
         .card {
             background: var(--ios-card);
-            border-radius: 14px; /* iOS 标准圆角 */
+            border-radius: 12px;
             padding: 0 16px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
         }
 
         .input-item {
             display: flex;
             align-items: center;
-            padding: 12px 0;
+            padding: 14px 0;
             border-bottom: 0.5px solid var(--ios-border);
         }
+        .input-item:last-child { border-bottom: none; }
 
-        .input-item:last-child {
-            border-bottom: none;
-        }
-
-        .label {
-            font-size: 17px;
-            width: 120px;
-        }
-
+        .label { font-size: 17px; width: 100px; }
         input {
             flex: 1;
             background: transparent;
@@ -82,97 +95,108 @@
             font-size: 17px;
             text-align: right;
             outline: none;
-            padding-right: 4px;
+            font-family: inherit;
         }
 
-        .unit {
-            color: var(--ios-secondary-text);
-            font-size: 17px;
-        }
+        .unit { color: var(--ios-secondary-text); font-size: 17px; margin-left: 6px; width: 20px; }
 
-        .result-section {
-            margin-top: 30px;
-        }
+        .result-section { margin-top: 28px; }
 
         .result-group {
             background: var(--ios-card);
-            border-radius: 14px;
-            padding: 16px;
-            margin-bottom: 12px;
+            border-radius: 12px;
+            padding: 20px 16px;
+            text-align: center; /* 结果居中显示更显眼 */
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
         }
 
-        .res-label {
-            font-size: 13px;
-            color: var(--ios-secondary-text);
-            text-transform: uppercase;
-            margin-bottom: 4px;
-            display: block;
-        }
+        .res-label { font-size: 13px; color: var(--ios-secondary-text); letter-spacing: 0.5px; margin-bottom: 8px; display: block; }
+        .res-value { font-size: 36px; font-weight: 800; margin: 4px 0; transition: color 0.3s; }
+        .res-sub { font-size: 14px; margin-top: 10px; font-weight: 500; }
 
-        .res-value {
-            font-size: 24px;
-            font-weight: 600;
-        }
-
-        #drawdown {
-            color: #ff3b30; /* 回撤用红色表示 */
-        }
-
-        #pointDiff {
-            color: var(--ios-primary);
-        }
+        /* 隐藏数字输入框箭头 */
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>回撤计算</h1>
+    <div class="header">
+        <h1>回撤计算</h1>
+        <button class="clear-btn" onclick="clearAll()">清除</button>
+    </div>
     
     <div class="card">
         <div class="input-item">
-            <span class="label">最高收益率</span>
-            <input type="number" id="highVal" placeholder="0.00" step="0.01" oninput="calculate()">
+            <span class="label">前次高点</span>
+            <input type="number" id="highVal" placeholder="12.63" inputmode="decimal" oninput="calculate()">
             <span class="unit">%</span>
         </div>
         <div class="input-item">
-            <span class="label">当前收益率</span>
-            <input type="number" id="currentVal" placeholder="0.00" step="0.01" oninput="calculate()">
+            <span class="label">当前数值</span>
+            <input type="number" id="currentVal" placeholder="4.86" inputmode="decimal" oninput="calculate()">
             <span class="unit">%</span>
         </div>
     </div>
 
     <div class="result-section">
         <div class="result-group">
-            <span class="res-label">数值下降 (百分点)</span>
-            <div class="res-value" id="pointDiff">0.00</div>
-        </div>
-        <div class="result-group">
-            <span class="res-label">实际资产回撤率</span>
-            <div class="res-value" id="drawdown">0.00%</div>
+            <span class="res-label" id="typeLabel">资产状态</span>
+            <div class="res-value" id="mainResult">0.00%</div>
+            <div class="res-sub" id="subResult">请输入数值开始计算</div>
         </div>
     </div>
 </div>
 
 <script>
     function calculate() {
-        const high = parseFloat(document.getElementById('highVal').value);
-        const curr = parseFloat(document.getElementById('currentVal').value);
-
-        if (!isNaN(high) && !isNaN(curr)) {
-            // 数值差
-            const diff = (high - curr).toFixed(2);
-            document.getElementById('pointDiff').innerText = diff;
-
-            // 回撤率: ( (1+high%) - (1+curr%) ) / (1+high%)
-            const highNet = 1 + (high / 100);
-            const currNet = 1 + (curr / 100);
-            const dd = ((highNet - currNet) / highNet * 100).toFixed(2);
-            
-            document.getElementById('drawdown').innerText = dd + '%';
-        } else {
-            document.getElementById('pointDiff').innerText = '0.00';
-            document.getElementById('drawdown').innerText = '0.00%';
+        const hVal = document.getElementById('highVal').value;
+        const cVal = document.getElementById('currentVal').value;
+        
+        if (hVal === "" || cVal === "") {
+            resetDisplay();
+            return;
         }
+
+        const h = parseFloat(hVal);
+        const c = parseFloat(cVal);
+        const mainEl = document.getElementById('mainResult');
+        const subEl = document.getElementById('subResult');
+        const labelEl = document.getElementById('typeLabel');
+
+        const diffPoints = (c - h).toFixed(2);
+        
+        if (c >= h) {
+            labelEl.innerText = "资产增长率";
+            const growth = (((1 + c/100) - (1 + h/100)) / (1 + h/100) * 100).toFixed(2);
+            mainEl.innerText = "+" + growth + "%";
+            mainEl.style.color = "var(--ios-up)";
+            subEl.innerText = "📈 较前高上涨 " + Math.abs(diffPoints) + " 个百分点";
+            subEl.style.color = "var(--ios-up)";
+        } else {
+            labelEl.innerText = "实际回撤率";
+            const drawdown = (((1 + h/100) - (1 + c/100)) / (1 + h/100) * 100).toFixed(2);
+            mainEl.innerText = "-" + drawdown + "%";
+            mainEl.style.color = "var(--ios-down)";
+            subEl.innerText = "📉 较前高跌了 " + Math.abs(diffPoints) + " 个百分点";
+            subEl.style.color = "var(--ios-down)";
+        }
+    }
+
+    function clearAll() {
+        document.getElementById('highVal').value = "";
+        document.getElementById('currentVal').value = "";
+        resetDisplay();
+    }
+
+    function resetDisplay() {
+        const mainEl = document.getElementById('mainResult');
+        const subEl = document.getElementById('subResult');
+        mainEl.innerText = "0.00%";
+        mainEl.style.color = "var(--ios-text)";
+        subEl.innerText = "请输入数值开始计算";
+        subEl.style.color = "var(--ios-secondary-text)";
+        document.getElementById('typeLabel').innerText = "资产状态";
     }
 </script>
 
