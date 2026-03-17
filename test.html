@@ -2,404 +2,179 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>财富看板-专业版</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>回撤计算</title>
     <style>
         :root {
-            --ali: #1677ff; --wx: #07c160; --ths: #ff4d4f;
-            --cry: #f7931a; --cmb: #c51d24; --gjj: #0052d9;
-            --debt: #334155; --receiv: #f1c40f; --up: #2ecc71; --down: #e74c3c;
-            --app-bg: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            --card-glass: rgba(255, 255, 255, 0.85);
-            --accent: #1e3c72;
+            --ios-bg: #f2f2f7;
+            --ios-card: #ffffff;
+            --ios-primary: #007aff;
+            --ios-text: #000000;
+            --ios-secondary-text: #8e8e93;
+            --ios-border: #d1d1d6;
         }
 
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
-            background: var(--app-bg); 
-            display: flex; justify-content: center; 
-            min-height: 100vh; margin: 0; padding: 20px 15px; box-sizing: border-box; 
-            color: #1e293b;
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --ios-bg: #000000;
+                --ios-card: #1c1c1e;
+                --ios-text: #ffffff;
+                --ios-secondary-text: #8e8e93;
+                --ios-border: #38383a;
+            }
         }
 
-        /* 主卡片容器 */
-        .app-card { 
-            background: var(--card-glass); 
-            backdrop-filter: blur(25px); 
-            -webkit-backdrop-filter: blur(25px);
-            border: 1px solid rgba(255, 255, 255, 0.7);
-            border-radius: 36px; padding: 28px; width: 100%; max-width: 420px; 
-            box-shadow: 0 25px 60px rgba(31, 38, 135, 0.08), inset 0 0 0 1px rgba(255, 255, 255, 0.4); 
-            height: fit-content; 
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--ios-bg);
+            color: var(--ios-text);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            /* 改为靠上对齐 */
+            align-items: flex-start; 
+            height: 100vh;
+            /* 设置顶部留白，约为屏幕高度的 8% */
+            padding-top: 8vh; 
+            box-sizing: border-box;
         }
 
-        /* 顶部总资产卡片 */
-        .summary-card { 
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); 
-            padding: 26px; border-radius: 28px; color: #fff; 
-            box-shadow: 0 15px 35px rgba(30, 60, 114, 0.25);
-            position: relative; overflow: hidden;
-            margin-bottom: 8px;
-        }
-        .summary-card::after {
-            content: ''; position: absolute; top: -50%; right: -20%; width: 150px; height: 150px;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        .container {
+            width: 92%;
+            max-width: 400px;
         }
 
-        .summary-header { display: flex; justify-content: space-between; align-items: center; opacity: 0.8; font-size: 11px; letter-spacing: 1.5px; font-weight: 600; }
-        .summary-val { font-size: 36px; font-weight: 800; font-family: "DIN Alternate", -apple-system, sans-serif; margin-top: 10px; }
-        .update-time { font-size: 11px; color: #94a3b8; text-align: right; margin: 12px 0 24px 0; font-weight: 500; }
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin: 0 0 20px 10px; /* 标题靠左对齐，符合 iOS 17 大标题风格 */
+            letter-spacing: -0.5px;
+        }
 
-        /* 输入网格系统 */
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 16px; margin-bottom: 30px; }
-        .label-wrap { display: flex; align-items: center; margin-bottom: 6px; font-size: 12px; color: #64748b; font-weight: 700; }
-        .brand-line { width: 3px; height: 11px; border-radius: 2px; margin-right: 6px; }
-        
-        /* 气泡式输入框 */
-        .input-box { 
-            position: relative; 
-            background: rgba(255, 255, 255, 0.5);
+        .card {
+            background: var(--ios-card);
+            border-radius: 14px; /* iOS 标准圆角 */
+            padding: 0 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .input-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 0.5px solid var(--ios-border);
+        }
+
+        .input-item:last-child {
+            border-bottom: none;
+        }
+
+        .label {
+            font-size: 17px;
+            width: 120px;
+        }
+
+        input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--ios-text);
+            font-size: 17px;
+            text-align: right;
+            outline: none;
+            padding-right: 4px;
+        }
+
+        .unit {
+            color: var(--ios-secondary-text);
+            font-size: 17px;
+        }
+
+        .result-section {
+            margin-top: 30px;
+        }
+
+        .result-group {
+            background: var(--ios-card);
             border-radius: 14px;
-            padding: 2px 12px;
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
-        }
-        .input-box:focus-within { 
-            background: #fff; border-color: var(--accent); 
-            box-shadow: 0 8px 20px rgba(30, 60, 114, 0.08);
-            transform: translateY(-2px);
-        }
-        .input-box::before { content: "¥"; position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 13px; font-weight: 700; transition: 0.3s; }
-        .input-box:focus-within::before { color: var(--accent); }
-        
-        input { 
-            width: 100%; padding: 10px 0 10px 16px; border: none; background: transparent; 
-            font-size: 17px; font-weight: 700; outline: none; color: #1e293b; box-sizing: border-box; 
-        }
-        .blur-text { filter: blur(6px) grayscale(1); pointer-events: none; user-select: none; }
-
-        /* 按钮组 */
-        .btn-stack { display: flex; flex-direction: column; gap: 14px; margin-bottom: 35px; }
-        .save-btn { 
-            background: linear-gradient(135deg, #1488cc 0%, #2b32b2 100%); color: white; border: none; padding: 18px; 
-            border-radius: 20px; font-weight: 700; cursor: pointer; font-size: 16px;
-            transition: 0.3s; box-shadow: 0 10px 25px rgba(20, 136, 204, 0.3);
-            letter-spacing: 1px;
-        }
-        .save-btn:active { transform: scale(0.96); box-shadow: 0 5px 10px rgba(20, 136, 204, 0.2); }
-
-        .secondary-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-        .sec-btn { 
-            background: rgba(255, 255, 255, 0.7); color: #475569; border: 1px solid rgba(255, 255, 255, 0.9); 
-            padding: 12px; border-radius: 16px; font-size: 13px; font-weight: 600; cursor: pointer; 
-            display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s;
-        }
-        .sec-btn:active { background: #fff; transform: scale(0.97); }
-
-        /* 历史列表美化 */
-        .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-        .section-title { font-size: 13px; font-weight: 800; color: #64748b; letter-spacing: 0.8px; }
-        .clear-all-btn { 
-            color: var(--down); font-size: 11px; font-weight: 700; cursor: pointer; 
-            padding: 5px 12px; border-radius: 10px; background: rgba(231, 76, 60, 0.08); 
-            border: 1px solid rgba(231, 76, 60, 0.1); transition: 0.2s;
+            padding: 16px;
+            margin-bottom: 12px;
         }
 
-        .history-list { max-height: 260px; overflow-y: auto; padding-right: 4px; }
-        .history-list::-webkit-scrollbar { width: 5px; }
-        .history-list::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.05); border-radius: 10px; }
-
-        .history-item { 
-            display: grid; grid-template-columns: 1.3fr 1.7fr 35px; 
-            align-items: center; padding: 16px; 
-            background: rgba(255, 255, 255, 0.4); 
-            border-radius: 20px; margin-bottom: 12px; 
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        .res-label {
+            font-size: 13px;
+            color: var(--ios-secondary-text);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+            display: block;
         }
-        .history-item:active { transform: scale(0.98); background: rgba(255, 255, 255, 0.8); }
 
-        .hist-amount { font-size: 15px; font-weight: 800; font-family: "DIN Alternate", sans-serif; color: #1e293b; }
-        .hist-time-center { font-size: 11px; color: #94a3b8; text-align: center; line-height: 1.4; font-weight: 500; }
-        
-        .diff-tag { font-size: 10px; padding: 3px 8px; border-radius: 6px; font-weight: 800; margin-top: 6px; display: inline-block; }
-        .diff-up { background: #dcfce7; color: #15803d; }
-        .diff-down { background: #fee2e2; color: #b91c1c; }
-        
-        .del-btn { width: 30px; height: 30px; border-radius: 10px; background: #fff; border: 1px solid #f1f5f9; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; transition: 0.2s; }
-        .del-btn:hover { background: #fff1f2; border-color: #fee2e2; }
-
-        /* 图表区域 */
-        .chart-box { width: 100%; height: 160px; margin-top: 20px; padding-top: 10px; border-top: 1px dashed rgba(0,0,0,0.05); }
-        .chart-svg { width: 100%; height: 130px; overflow: visible; }
-        .axis-label { font-size: 9px; fill: #94a3b8; font-weight: 600; }
-
-        @keyframes save-flash {
-            0% { transform: scale(1); filter: brightness(1); }
-            50% { transform: scale(1.02); filter: brightness(1.1); }
-            100% { transform: scale(1); filter: brightness(1); }
+        .res-value {
+            font-size: 24px;
+            font-weight: 600;
         }
-        .save-active { animation: save-flash 0.5s ease-out; }
+
+        #drawdown {
+            color: #ff3b30; /* 回撤用红色表示 */
+        }
+
+        #pointDiff {
+            color: var(--ios-primary);
+        }
     </style>
 </head>
 <body>
 
-<div class="app-card">
-    <div class="summary-card" id="summary-card">
-        <div class="summary-header">
-            <span>NET WORTH / 净资产</span>
-            <button onclick="togglePrivacy()" id="eye-toggle" style="background:none; border:none; color:white; cursor:pointer; padding:5px; display: flex; align-items: center; opacity: 0.8;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-            </button>
+<div class="container">
+    <h1>回撤计算</h1>
+    
+    <div class="card">
+        <div class="input-item">
+            <span class="label">最高收益率</span>
+            <input type="number" id="highVal" placeholder="0.00" step="0.01" oninput="calculate()">
+            <span class="unit">%</span>
         </div>
-        <div class="summary-val">¥ <span id="res">0.00</span></div>
-    </div>
-    <div class="update-time">最后更新：<span id="last-update">尚未保存</span></div>
-
-    <div class="grid">
-        <div class="item">
-            <div class="label-wrap"><div class="brand-line" style="background:var(--ali)"></div>支付宝</div>
-            <div class="input-box"><input type="text" inputmode="decimal" class="asset-input" id="alipay" placeholder="0.00"></div>
-        </div>
-        <div class="item">
-            <div class="label-wrap"><div class="brand-line" style="background:var(--wx)"></div>微信支付</div>
-            <div class="input-box"><input type="text" inputmode="decimal" class="asset-input" id="wechat" placeholder="0.00"></div>
-        </div>
-        <div class="item">
-            <div class="label-wrap"><div class="brand-line" style="background:var(--ths)"></div>股票/基金</div>
-            <div class="input-box"><input type="text" inputmode="decimal" class="asset-input" id="ths" placeholder="0.00"></div>
-        </div>
-        <div class="item">
-            <div class="label-wrap"><div class="brand-line" style="background:var(--cry)"></div>加密货币</div>
-            <div class="input-box"><input type="text" inputmode="decimal" class="asset-input" id="crypto" placeholder="0.00"></div>
-        </div>
-        <div class="item">
-            <div class="label-wrap"><div class="brand-line" style="background:var(--cmb)"></div>招商银行</div>
-            <div class="input-box"><input type="text" inputmode="decimal" class="asset-input" id="cmb" placeholder="0.00"></div>
-        </div>
-        <div class="item">
-            <div class="label-wrap"><div class="brand-line" style="background:var(--gjj)"></div>公积金</div>
-            <div class="input-box"><input type="text" inputmode="decimal" class="asset-input" id="provident" placeholder="0.00"></div>
-        </div>
-        <div class="item">
-            <div class="label-wrap"><div class="brand-line" style="background:var(--receiv)"></div>借出/应收</div>
-            <div class="input-box"><input type="text" inputmode="decimal" class="asset-input" id="receivable" placeholder="0.00"></div>
-        </div>
-        <div class="item">
-            <div class="label-wrap"><div class="brand-line" style="background:var(--debt)"></div>欠款/负债</div>
-            <div class="input-box"><input type="text" inputmode="decimal" class="asset-input" id="debt" placeholder="0.00" style="color:var(--down)"></div>
+        <div class="input-item">
+            <span class="label">当前收益率</span>
+            <input type="number" id="currentVal" placeholder="0.00" step="0.01" oninput="calculate()">
+            <span class="unit">%</span>
         </div>
     </div>
 
-    <div class="btn-stack">
-        <button class="save-btn" onclick="saveRecord()">保存资产快照</button>
-        <div class="secondary-btns">
-            <button class="sec-btn" onclick="document.getElementById('fileIn').click()">📤 导入CSV</button>
-            <button class="sec-btn" onclick="exportData()">📥 导出备份</button>
+    <div class="result-section">
+        <div class="result-group">
+            <span class="res-label">数值下降 (百分点)</span>
+            <div class="res-value" id="pointDiff">0.00</div>
         </div>
-        <input type="file" id="fileIn" style="display:none" accept=".csv" onchange="importData(this)">
-    </div>
-
-    <div class="history-section">
-        <div class="history-header">
-            <span class="section-title">ASSET TRAJECTORY / 资产轨迹</span>
-            <button class="clear-all-btn" onclick="clearAllHistory()">清空</button>
-        </div>
-        <div class="history-list" id="hist-list"></div>
-        
-        <div class="chart-box" id="chart-wrap" style="display:none;">
-            <svg class="chart-svg" id="svg-chart">
-                <defs>
-                    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stop-color="#1488cc" stop-opacity="0.25"/>
-                        <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
-                    </linearGradient>
-                </defs>
-                <text x="0" y="10" class="axis-label" id="y-max"></text>
-                <text x="0" y="125" class="axis-label" id="y-min"></text>
-                <text x="0" y="145" class="axis-label" id="x-start"></text>
-                <text x="100%" y="145" class="axis-label" text-anchor="end" id="x-end"></text>
-                <path fill="url(#g)" id="c-area"></path>
-                <path fill="none" stroke="#1488cc" stroke-width="3" id="c-line" stroke-linejoin="round" stroke-linecap="round"></path>
-            </svg>
+        <div class="result-group">
+            <span class="res-label">实际资产回撤率</span>
+            <div class="res-value" id="drawdown">0.00%</div>
         </div>
     </div>
 </div>
 
 <script>
-    const inputs = document.querySelectorAll('.asset-input');
-    const resDisp = document.getElementById('res');
-    const timeDisp = document.getElementById('last-update');
-    const histList = document.getElementById('hist-list');
-    const ASSET_KEYS = ['alipay', 'wechat', 'ths', 'crypto', 'cmb', 'provident', 'receivable', 'debt'];
-    let isPrivate = localStorage.getItem('v_privacy') === 'true';
+    function calculate() {
+        const high = parseFloat(document.getElementById('highVal').value);
+        const curr = parseFloat(document.getElementById('currentVal').value);
 
-    window.onload = () => {
-        ASSET_KEYS.forEach(k => {
-            const v = localStorage.getItem('v_all_fn_' + k);
-            if (v) document.getElementById(k).value = v;
-        });
-        const savedTime = localStorage.getItem('v_all_fn_last_update');
-        if (savedTime) timeDisp.innerText = savedTime;
-        update(false);
-        applyPrivacyStyle();
-        render();
-    };
+        if (!isNaN(high) && !isNaN(curr)) {
+            // 数值差
+            const diff = (high - curr).toFixed(2);
+            document.getElementById('pointDiff').innerText = diff;
 
-    function togglePrivacy() {
-        isPrivate = !isPrivate;
-        localStorage.setItem('v_privacy', isPrivate);
-        applyPrivacyStyle();
-        render();
-    }
-
-    function applyPrivacyStyle() {
-        const toggleBtn = document.getElementById('eye-toggle');
-        if (isPrivate) {
-            resDisp.classList.add('blur-text');
-            inputs.forEach(i => i.classList.add('blur-text'));
-            document.getElementById('chart-wrap').style.filter = 'blur(12px)';
-            toggleBtn.style.opacity = '0.5';
+            // 回撤率: ( (1+high%) - (1+curr%) ) / (1+high%)
+            const highNet = 1 + (high / 100);
+            const currNet = 1 + (curr / 100);
+            const dd = ((highNet - currNet) / highNet * 100).toFixed(2);
+            
+            document.getElementById('drawdown').innerText = dd + '%';
         } else {
-            resDisp.classList.remove('blur-text');
-            inputs.forEach(i => i.classList.remove('blur-text'));
-            document.getElementById('chart-wrap').style.filter = 'none';
-            toggleBtn.style.opacity = '1';
+            document.getElementById('pointDiff').innerText = '0.00';
+            document.getElementById('drawdown').innerText = '0.00%';
         }
     }
-
-    function update(shoudTime = true) {
-        let assets = 0, debtVal = parseFloat(document.getElementById('debt').value) || 0;
-        ASSET_KEYS.forEach(k => { if(k !== 'debt') assets += (parseFloat(document.getElementById(k).value) || 0); });
-        const netWorth = assets - debtVal;
-        resDisp.innerText = netWorth.toLocaleString('zh-CN', {minimumFractionDigits: 2});
-        if (shoudTime) {
-            const timeStr = new Date().toLocaleString('zh-CN', {hour12: false});
-            timeDisp.innerText = timeStr;
-            localStorage.setItem('v_all_fn_last_update', timeStr);
-        }
-    }
-
-    function saveRecord() {
-        const total = parseFloat(resDisp.innerText.replace(/,/g, ''));
-        const now = new Date();
-        const fullTime = now.getFullYear() + '/' + String(now.getMonth() + 1).padStart(2, '0') + '/' + String(now.getDate()).padStart(2, '0') + ' ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
-        const chartDay = (now.getMonth()+1) + '-' + now.getDate();
-        
-        const timeStr = now.toLocaleString('zh-CN', {hour12: false});
-        timeDisp.innerText = timeStr;
-        localStorage.setItem('v_all_fn_last_update', timeStr);
-        
-        let detail = {};
-        ASSET_KEYS.forEach(k => detail[k] = document.getElementById(k).value || "0");
-        
-        let h = JSON.parse(localStorage.getItem('v_all_fn_hist') || "[]");
-        h.unshift({amount: total, time: fullTime, day: chartDay, detail: detail});
-        localStorage.setItem('v_all_fn_hist', JSON.stringify(h));
-        
-        render();
-        const card = document.getElementById('summary-card');
-        card.classList.remove('save-active');
-        void card.offsetWidth; card.classList.add('save-active');
-    }
-
-    function render() {
-        let h = JSON.parse(localStorage.getItem('v_all_fn_hist') || "[]");
-        histList.innerHTML = h.map((r, i) => {
-            const amount = r.amount != null ? Number(r.amount) : 0;
-            let diffHtml = "";
-            if (i < h.length - 1) {
-                const nextAmount = h[i+1].amount != null ? Number(h[i+1].amount) : 0;
-                const d = amount - nextAmount;
-                diffHtml = `<span class="diff-tag ${d>=0?'diff-up':'diff-down'}">${d>=0?'▲':'▼'} ¥${Math.abs(d).toLocaleString()}</span>`;
-            } else { 
-                diffHtml = `<span class="diff-tag" style="background:#f1f5f9;color:#94a3b8">INITIAL</span>`; 
-            }
-            return `<div class="history-item">
-                <div class="hist-info-left ${isPrivate?'blur-text':''}">
-                    <div class="hist-amount">¥${amount.toLocaleString()}</div>
-                    ${diffHtml}
-                </div>
-                <div class="hist-time-center">${r.time.replace(' ', '<br>')}</div>
-                <div class="del-btn-wrap"><button class="del-btn" onclick="del(${i})">✕</button></div>
-            </div>`;
-        }).join('');
-        draw(h);
-    }
-
-    function draw(h) {
-        const box = document.getElementById('chart-wrap');
-        if (h.length < 2) { box.style.display='none'; return; }
-        box.style.display='block';
-        const data = [...h].reverse().slice(-10);
-        const vals = data.map(r => r.amount != null ? Number(r.amount) : 0);
-        const w = document.getElementById('svg-chart').clientWidth, ht = 120;
-        let max = Math.max(...vals), min = Math.min(...vals);
-        let pad = (max - min) * 0.2 || 1000;
-        max += pad; min -= pad;
-        
-        document.getElementById('y-max').textContent = (max/10000).toFixed(1)+'w';
-        document.getElementById('y-min').textContent = (min/10000).toFixed(1)+'w';
-        document.getElementById('x-start').textContent = data[0] ? data[0].day : '';
-        document.getElementById('x-end').textContent = data[data.length-1] ? data[data.length-1].day : '';
-        
-        const pts = vals.map((v, i) => {
-            const x = (i/(vals.length-1)) * w;
-            const y = ht - ((v-min)/(max-min)) * ht;
-            return `${x},${y}`;
-        });
-        const d = `M ${pts.join(' L ')}`;
-        document.getElementById('c-line').setAttribute('d', d);
-        document.getElementById('c-area').setAttribute('d', `${d} L ${w},${ht} L 0,${ht} Z`);
-    }
-
-    function del(idx) { if(confirm("确定删除该条记录？")) { let h = JSON.parse(localStorage.getItem('v_all_fn_hist')); h.splice(idx,1); localStorage.setItem('v_all_fn_hist',JSON.stringify(h)); render(); } }
-    function clearAllHistory() { if(confirm("警告：将永久清空所有历史轨迹，确定吗？")) { localStorage.removeItem('v_all_fn_hist'); render(); } }
-
-    function exportData() {
-        let h = JSON.parse(localStorage.getItem('v_all_fn_hist') || "[]");
-        if (!h.length) return alert("没有可导出的数据");
-        let csv = "\uFEFF时间,总资产," + ASSET_KEYS.join(",") + "\n";
-        csv += [...h].reverse().map(r => [r.time, r.amount, ...ASSET_KEYS.map(k => (r.detail?r.detail[k]:""))].join(",")).join("\n");
-        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type: 'text/csv'})); a.download = `财富快照备份_${new Date().toISOString().slice(0,10)}.csv`; a.click();
-    }
-
-    function importData(input) {
-        const file = input.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                let csv = e.target.result.replace(/^\uFEFF/, '');
-                const lines = csv.split("\n").filter(line => line.trim());
-                const history = [];
-                for (let i = 1; i < lines.length; i++) {
-                    const values = lines[i].split(",");
-                    const detail = {};
-                    ASSET_KEYS.forEach((k, idx) => { detail[k] = values[2 + idx] || "0"; });
-                    history.push({
-                        time: values[0],
-                        amount: parseFloat(values[1]) || 0,
-                        day: values[0].split(" ")[0].split("/").slice(-2).join("-"),
-                        detail: detail
-                    });
-                }
-                if (history.length) {
-                    localStorage.setItem('v_all_fn_hist', JSON.stringify(history.reverse()));
-                    alert("导入成功！");
-                    location.reload();
-                }
-            } catch(err) { alert("导入失败，请检查CSV格式"); }
-        };
-        reader.readAsText(file);
-    }
-
-    inputs.forEach(i => i.addEventListener('input', (e) => {
-        let v = e.target.value.replace(/[^\d.]/g, "").replace(/\.(?=.*\.)/g, "");
-        e.target.value = v;
-        localStorage.setItem('v_all_fn_' + e.target.id, v);
-        update(true);
-    }));
 </script>
+
 </body>
 </html>
