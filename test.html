@@ -2,7 +2,15 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<!-- 关联刚才创建的清单 -->
+	<link rel="manifest" href="manifest.json">
+	
+	<!-- iOS 专用配置：隐藏 Safari 地址栏和状态栏 -->
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+	<meta name="apple-mobile-web-app-title" content="回撤计算">
+	<!-- viewport-fit=cover 是消除顶部黑边的核心 -->
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Drawdown Calculator</title>
     <style>
         :root {
