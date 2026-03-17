@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+	<!-- 关联刚才创建的清单 -->
+	<link rel="manifest" href="manifest.json">
+	
+	<!-- iOS 专用配置：隐藏 Safari 地址栏和状态栏 -->
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+	<meta name="apple-mobile-web-app-title" content="回撤计算">
+	<!-- viewport-fit=cover 是消除顶部黑边的核心 -->
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Drawdown Calculator</title>
+    <style>
+        :root {
+            --ios-bg: #f2f2f7;
+            --ios-card: #ffffff;
+            --ios-primary: #007aff;
+            --ios-up: #ff3b30;    /* 涨红 */
+            --ios-down: #34c759;  /* 跌绿 */
+            --ios-text: #000000;
+            --ios-secondary-text: #8e8e93;
+            --ios-border: #d1d1d6;
+            --ios-btn-bg: rgba(0, 122, 255, 0.1);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --ios-bg: #000000;
+                --ios-card: #1c1c1e;
+                --ios-text: #ffffff;
+                --ios-border: #38383a;
+                --ios-btn-bg: rgba(10, 132, 255, 0.15);
+            }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+            background-color: var(--ios-bg);
+            color: var(--ios-text);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; 
+            height: 100vh;
+            padding-top: 5vh;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .container { width: 92%; max-width: 400px; }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 0 4px;
+        }
+
+        h1 { font-size: 28px; font-weight: 700; margin: 0; letter-spacing: -0.5px; }
+        
+        .clear-btn {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--ios-primary);
+            background-color: var(--ios-btn-bg);
+            border: none;
+            padding: 6px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .clear-btn:active { transform: scale(0.92); background-color: rgba(0, 122, 255, 0.25); }
+
+        .card {
+            background: var(--ios-card);
+            border-radius: 12px;
+            padding: 0 16px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+        }
+
+        .input-item {
+            display: flex;
+            align-items: center;
+            padding: 14px 0;
+            border-bottom: 0.5px solid var(--ios-border);
+        }
+        .input-item:last-child { border-bottom: none; }
+
+        .label { font-size: 17px; width: 100px; }
+        
+        /* 改为 text 类型并优化样式 */
+        input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--ios-text);
+            font-size: 17px;
+            text-align: right;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .unit { color: var(--ios-secondary-text); font-size: 17px; margin-left: 6px; width: 20px; }
+
+        .result-section { margin-top: 28px; }
+
+        .result-group {
+            background: var(--ios-card);
+            border-radius: 12px;
+            padding: 24px 16px;
+            text-align: center;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+        }
+
+        .res-label { font-size: 13px; color: var(--ios-secondary-text); letter-spacing: 0.5px; margin-bottom: 8px; display: block; }
+        .res-value { font-size: 40px; font-weight: 800; margin: 4px 0; }
+        .res-sub { font-size: 14px; margin-top: 10px; font-weight: 500; opacity: 0.9; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>回撤计算</h1>
+        <button class="clear-btn" onclick="clearAll()">清除</button>
+    </div>
+    
+    <div class="card">
+        <div class="input-item">
+            <span class="label">前次高点</span>
+            <!-- 使用 type="text" 并指定 inputmode 以支持负号 -->
+            <input type="text" id="highVal" placeholder="0.00" inputmode="text" oninput="validateAndCalc(this)">
+            <span class="unit">%</span>
+        </div>
+        <div class="input-item">
+            <span class="label">当前数值</span>
+            <input type="text" id="currentVal" placeholder="0.00" inputmode="text" oninput="validateAndCalc(this)">
+            <span class="unit">%</span>
+        </div>
+    </div>
+
+    <div class="result-section">
+        <div class="result-group">
+            <span class="res-label" id="typeLabel">资产状态</span>
+            <div class="res-value" id="mainResult">0.00%</div>
+            <div class="res-sub" id="subResult">请输入数值开始计算</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 限制只能输入数字、小数点和开头的负号
+    function validateAndCalc(el) {
+        let val = el.value;
+        // 允许开头输入负号，后面只能是数字或一个小数点
+        val = val.replace(/[^\d.-]/g, ""); // 去除非数字、点、负号
+        if (val.indexOf('-') > 0) val = val.replace('-', ''); // 负号不在开头则去掉
+        const dots = val.split('.');
+        if (dots.length > 2) val = dots[0] + '.' + dots.slice(1).join(''); // 只保留第一个点
+        
+        el.value = val;
+        calculate();
+    }
+
+    function calculate() {
+        const hStr = document.getElementById('highVal').value;
+        const cStr = document.getElementById('currentVal').value;
+        
+        // 只有当两个都是有效数值时才计算
+        if (hStr === "" || cStr === "" || hStr === "-" || cStr === "-") {
+            resetDisplay();
+            return;
+        }
+
+        const h = parseFloat(hStr);
+        const c = parseFloat(cStr);
+        const mainEl = document.getElementById('mainResult');
+        const subEl = document.getElementById('subResult');
+        const labelEl = document.getElementById('typeLabel');
+
+        const diffPoints = (c - h).toFixed(2);
+        
+        // 核心公式：回撤/增长 = (当前净值 - 高点净值) / 高点净值
+        // 净值 = 1 + (收益率/100)
+        const highNet = 1 + (h / 100);
+        const currNet = 1 + (c / 100);
+        
+        if (currNet >= highNet) {
+            labelEl.innerText = "资产增长率";
+            const growth = ((currNet - highNet) / highNet * 100).toFixed(2);
+            mainEl.innerText = "+" + growth + "%";
+            mainEl.style.color = "var(--ios-up)";
+            subEl.innerText = "📈 较前高上涨 " + Math.abs(diffPoints) + " 个百分点";
+            subEl.style.color = "var(--ios-up)";
+        } else {
+            labelEl.innerText = "实际回撤率";
+            const drawdown = ((highNet - currNet) / highNet * 100).toFixed(2);
+            mainEl.innerText = "-" + drawdown + "%";
+            mainEl.style.color = "var(--ios-down)";
+            subEl.innerText = "📉 较前高跌了 " + Math.abs(diffPoints) + " 个百分点";
+            subEl.style.color = "var(--ios-down)";
+        }
+    }
+
+    function clearAll() {
+        document.getElementById('highVal').value = "";
+        document.getElementById('currentVal').value = "";
+        resetDisplay();
+    }
+
+    function resetDisplay() {
+        const mainEl = document.getElementById('mainResult');
+        const subEl = document.getElementById('subResult');
+        mainEl.innerText = "0.00%";
+        mainEl.style.color = "var(--ios-text)";
+        subEl.innerText = "请输入数值开始计算";
+        subEl.style.color = "var(--ios-secondary-text)";
+        document.getElementById('typeLabel').innerText = "资产状态";
+    }
+</script>
+
+</body>
+</html>
