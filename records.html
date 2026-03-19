@@ -906,8 +906,8 @@
 			if (data.date === todayStr) {
 			    console.log("日期匹配，读取今日数据:", data);
 				// 渲染到页面
-				document.getElementById('ths').innerText = data.stockToday;
-				document.getElementById('alipay').innerText = data.fundToday;
+				document.getElementById('ths').value = data.stockToday;
+				document.getElementById('alipay').value = data.fundToday;
 			    
 			} else {
 			    console.log("数据已过期。存储日期:", data.date, "当前日期:", todayStr);
