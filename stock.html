@@ -1158,9 +1158,12 @@
 		async function getHKDToCNY() {
 		  const res = await fetch("https://open.er-api.com/v6/latest/HKD");
 		  const data = await res.json();
-		
+
 		  const rate = data.rates.CNY;
-		  document.getElementById('fxRateInput').value = rate.toFixed(2);
+		  const fxRateInput = document.getElementById('fxRateInput');
+		  if (fxRateInput) {
+		    fxRateInput.value = rate.toFixed(2);
+		  }
 		  console.log("1 HKD ≈", rate, "CNY");
 		  return rate;
 		}
